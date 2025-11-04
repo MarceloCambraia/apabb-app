@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Repeat, CreditCard, Smartphone, Heart, Gift } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Repeat, CreditCard, Smartphone, Heart, Gift, MapPin } from "lucide-react";
 
 const donationOptions = [
   {
@@ -41,6 +43,7 @@ export function DonationSection() {
   const [selectedAmount, setSelectedAmount] = useState<string>("");
   const [customAmount, setCustomAmount] = useState<string>("");
   const [isRecurring, setIsRecurring] = useState(true);
+  const [selectedNucleo, setSelectedNucleo] = useState<string>("");
 
   const handleDonationSelect = (amount: string) => {
     setSelectedAmount(amount);
@@ -69,7 +72,7 @@ export function DonationSection() {
         </div>
 
         {/* Toggle para Doação Recorrente */}
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-8">
           <div className="bg-card rounded-lg p-1 border shadow-soft">
             <Button 
               variant={isRecurring ? "default" : "ghost"}
@@ -90,6 +93,41 @@ export function DonationSection() {
               Doação Única
             </Button>
           </div>
+        </div>
+
+        {/* Seleção de Núcleo Regional */}
+        <div className="max-w-md mx-auto mb-12">
+          <Card className="shadow-soft">
+            <CardContent className="pt-6">
+              <Label htmlFor="nucleo" className="flex items-center gap-2 mb-3">
+                <MapPin className="w-4 h-4 text-secondary" />
+                <span className="font-semibold">Escolha o núcleo que deseja apoiar</span>
+              </Label>
+              <Select value={selectedNucleo} onValueChange={setSelectedNucleo}>
+                <SelectTrigger id="nucleo">
+                  <SelectValue placeholder="Selecione um núcleo regional" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Núcleos</SelectItem>
+                  <SelectItem value="df">Brasília - DF</SelectItem>
+                  <SelectItem value="sp">São Paulo - SP</SelectItem>
+                  <SelectItem value="rj">Rio de Janeiro - RJ</SelectItem>
+                  <SelectItem value="mg">Belo Horizonte - MG</SelectItem>
+                  <SelectItem value="rs">Porto Alegre - RS</SelectItem>
+                  <SelectItem value="ba">Salvador - BA</SelectItem>
+                  <SelectItem value="pr">Curitiba - PR</SelectItem>
+                  <SelectItem value="ce">Fortaleza - CE</SelectItem>
+                  <SelectItem value="pe">Recife - PE</SelectItem>
+                  <SelectItem value="go">Goiânia - GO</SelectItem>
+                  <SelectItem value="pa">Belém - PA</SelectItem>
+                  <SelectItem value="sc">Florianópolis - SC</SelectItem>
+                  <SelectItem value="es">Vitória - ES</SelectItem>
+                  <SelectItem value="rn">Natal - RN</SelectItem>
+                  <SelectItem value="se">Aracaju - SE</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Cards de Doação */}

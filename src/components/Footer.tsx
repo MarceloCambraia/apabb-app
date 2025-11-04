@@ -18,8 +18,8 @@ export function Footer() {
               </div>
             </div>
             <p className="text-primary-foreground/90 mb-6 max-w-md leading-relaxed">
-              Associação de Pais, Amigos e Pessoas com Deficiência dos Funcionários do Banco do Brasil e da Comunidade. 
-              Trabalhamos pela inclusão, apoio e qualidade de vida.
+              Há 38 anos promovendo os direitos das pessoas com deficiência e suas famílias em 15 capitais brasileiras. 
+              Atuamos na inclusão social, acessibilidade, formação cidadã e convivência comunitária.
             </p>
             <div className="flex gap-3">
               <Button variant="secondary" size="icon" className="rounded-full">
@@ -44,23 +44,28 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#sobre" className="hover:text-secondary transition-smooth">
-                  Sobre a APABB
+                <a href="#projetos" className="hover:text-secondary transition-smooth">
+                  Projetos Regionais
                 </a>
               </li>
               <li>
-                <a href="#clube" className="hover:text-secondary transition-smooth">
-                  Clube do Doador
+                <a href="#marketplace" className="hover:text-secondary transition-smooth">
+                  Marketplace
                 </a>
               </li>
               <li>
-                <a href="#transparencia" className="hover:text-secondary transition-smooth">
-                  Transparência
+                <a href="#voluntariado" className="hover:text-secondary transition-smooth">
+                  Voluntariado
                 </a>
               </li>
               <li>
-                <a href="#contato" className="hover:text-secondary transition-smooth">
-                  Contato
+                <a href="#associar" className="hover:text-secondary transition-smooth">
+                  Associar-se
+                </a>
+              </li>
+              <li>
+                <a href="#noticias" className="hover:text-secondary transition-smooth">
+                  Notícias
                 </a>
               </li>
             </ul>

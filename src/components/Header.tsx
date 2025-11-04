@@ -18,14 +18,17 @@ export function Header() {
           <a href="#inicio" className="text-sm font-medium hover:text-primary transition-smooth">
             Início
           </a>
-          <a href="#sobre" className="text-sm font-medium hover:text-primary transition-smooth">
-            Sobre
+          <a href="#projetos" className="text-sm font-medium hover:text-primary transition-smooth">
+            Projetos
           </a>
-          <a href="#clube" className="text-sm font-medium hover:text-primary transition-smooth">
-            Clube do Doador
+          <a href="#marketplace" className="text-sm font-medium hover:text-primary transition-smooth">
+            Marketplace
           </a>
-          <a href="#transparencia" className="text-sm font-medium hover:text-primary transition-smooth">
-            Transparência
+          <a href="#voluntariado" className="text-sm font-medium hover:text-primary transition-smooth">
+            Voluntariado
+          </a>
+          <a href="#associar" className="text-sm font-medium hover:text-primary transition-smooth">
+            Associar-se
           </a>
         </nav>
         

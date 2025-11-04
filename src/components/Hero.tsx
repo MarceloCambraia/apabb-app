@@ -22,7 +22,7 @@ export function Hero() {
           </h1>
           
           <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto leading-relaxed">
-            Junte-se à APABB e faça parte de uma comunidade que acredita na inclusão e no apoio às pessoas com deficiência
+            Há 38 anos promovendo inclusão e dignidade para pessoas com deficiência em 15 capitais brasileiras
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -51,7 +51,7 @@ export function Hero() {
               <div className="text-sm text-white/80">Transparência</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-secondary mb-2">8</div>
+              <div className="text-3xl font-bold text-secondary mb-2">38</div>
               <div className="text-sm text-white/80">Anos de Impacto</div>
             </div>
           </div>
