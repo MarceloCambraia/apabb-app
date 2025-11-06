@@ -14,7 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      associates: {
+        Row: {
+          accept_terms: boolean
+          address: string
+          birth_date: string
+          cep: string
+          city: string
+          complement: string | null
+          cpf: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          neighborhood: string
+          nucleus: string
+          number: string
+          phone: string
+          relationship: string
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          accept_terms?: boolean
+          address: string
+          birth_date: string
+          cep: string
+          city: string
+          complement?: string | null
+          cpf: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          neighborhood: string
+          nucleus: string
+          number: string
+          phone: string
+          relationship: string
+          state: string
+          updated_at?: string
+        }
+        Update: {
+          accept_terms?: boolean
+          address?: string
+          birth_date?: string
+          cep?: string
+          city?: string
+          complement?: string | null
+          cpf?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          neighborhood?: string
+          nucleus?: string
+          number?: string
+          phone?: string
+          relationship?: string
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      volunteers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          interest_area: string
+          message: string | null
+          name: string
+          nucleus: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          interest_area: string
+          message?: string | null
+          name: string
+          nucleus: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          interest_area?: string
+          message?: string | null
+          name?: string
+          nucleus?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

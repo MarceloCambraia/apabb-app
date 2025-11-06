@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { HandHeart, Users, Award, Clock } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const opportunities = [
   {
@@ -50,14 +51,44 @@ export function VolunteerSection() {
     area: "",
     message: ""
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Cadastro recebido!",
-      description: "Em breve entraremos em contato para mais informações.",
-    });
-    setFormData({ name: "", email: "", phone: "", nucleo: "", area: "", message: "" });
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('volunteers')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            nucleus: formData.nucleo,
+            interest_area: formData.area,
+            message: formData.message || null
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Cadastro recebido!",
+        description: "Em breve entraremos em contato para mais informações.",
+      });
+
+      setFormData({ name: "", email: "", phone: "", nucleo: "", area: "", message: "" });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "Erro ao cadastrar",
+        description: "Ocorreu um erro ao processar seu cadastro. Por favor, tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -205,9 +236,9 @@ export function VolunteerSection() {
                     />
                   </div>
 
-                  <Button type="submit" variant="hero" className="w-full" size="lg">
+                  <Button type="submit" variant="hero" className="w-full" size="lg" disabled={isSubmitting}>
                     <HandHeart className="w-5 h-5" />
-                    Cadastrar como Voluntário
+                    {isSubmitting ? "Cadastrando..." : "Cadastrar como Voluntário"}
                   </Button>
                 </form>
               </CardContent>

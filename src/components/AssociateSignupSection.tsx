@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UserPlus, CheckCircle2, Users, Heart, Shield } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const benefits = [
   "Acesso prioritário a eventos e atividades",
@@ -26,16 +27,22 @@ export function AssociateSignupSection() {
     phone: "",
     cpf: "",
     birthDate: "",
+    cep: "",
     address: "",
+    number: "",
+    complement: "",
+    neighborhood: "",
     city: "",
     state: "",
     nucleo: "",
     relationship: "",
     acceptTerms: false
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!formData.acceptTerms) {
       toast({
         title: "Atenção",
@@ -44,23 +51,66 @@ export function AssociateSignupSection() {
       });
       return;
     }
-    toast({
-      title: "Cadastro realizado com sucesso!",
-      description: "Em breve você receberá um e-mail de confirmação.",
-    });
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      cpf: "",
-      birthDate: "",
-      address: "",
-      city: "",
-      state: "",
-      nucleo: "",
-      relationship: "",
-      acceptTerms: false
-    });
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('associates')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            cpf: formData.cpf,
+            birth_date: formData.birthDate,
+            phone: formData.phone,
+            cep: formData.cep,
+            address: formData.address,
+            number: formData.number,
+            complement: formData.complement || null,
+            neighborhood: formData.neighborhood,
+            city: formData.city,
+            state: formData.state,
+            nucleus: formData.nucleo,
+            relationship: formData.relationship,
+            accept_terms: formData.acceptTerms
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Cadastro realizado com sucesso!",
+        description: "Em breve você receberá um e-mail de confirmação.",
+      });
+
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        cpf: "",
+        birthDate: "",
+        cep: "",
+        address: "",
+        number: "",
+        complement: "",
+        neighborhood: "",
+        city: "",
+        state: "",
+        nucleo: "",
+        relationship: "",
+        acceptTerms: false
+      });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "Erro ao cadastrar",
+        description: "Ocorreu um erro ao processar seu cadastro. Por favor, tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -199,12 +249,53 @@ export function AssociateSignupSection() {
                       />
                     </div>
 
-                    <div className="md:col-span-2">
-                      <Label htmlFor="address">Endereço</Label>
+                    <div>
+                      <Label htmlFor="cep">CEP *</Label>
+                      <Input
+                        id="cep"
+                        value={formData.cep}
+                        onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                        placeholder="00000-000"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="address">Endereço *</Label>
                       <Input
                         id="address"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="number">Número *</Label>
+                      <Input
+                        id="number"
+                        value={formData.number}
+                        onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="complement">Complemento</Label>
+                      <Input
+                        id="complement"
+                        value={formData.complement}
+                        onChange={(e) => setFormData({ ...formData, complement: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="neighborhood">Bairro *</Label>
+                      <Input
+                        id="neighborhood"
+                        value={formData.neighborhood}
+                        onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
+                        required
                       />
                     </div>
 
@@ -310,9 +401,9 @@ export function AssociateSignupSection() {
                     </Label>
                   </div>
 
-                  <Button type="submit" variant="hero" className="w-full" size="lg">
+                  <Button type="submit" variant="hero" className="w-full" size="lg" disabled={isSubmitting}>
                     <Heart className="w-5 h-5" />
-                    Finalizar Cadastro
+                    {isSubmitting ? "Cadastrando..." : "Finalizar Cadastro"}
                   </Button>
                 </form>
               </CardContent>
