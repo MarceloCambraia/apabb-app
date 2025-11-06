@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Repeat, CreditCard, Smartphone, Heart, Gift, MapPin } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const donationOptions = [
   {
@@ -44,6 +48,11 @@ export function DonationSection() {
   const [customAmount, setCustomAmount] = useState<string>("");
   const [isRecurring, setIsRecurring] = useState(true);
   const [selectedNucleo, setSelectedNucleo] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleDonationSelect = (amount: string) => {
     setSelectedAmount(amount);
@@ -53,6 +62,75 @@ export function DonationSection() {
   const handleCustomAmountChange = (value: string) => {
     setCustomAmount(value);
     setSelectedAmount("");
+  };
+
+  const handleContinueDonation = async () => {
+    const amount = customAmount || selectedAmount;
+    
+    if (!amount) {
+      toast({
+        title: "Atenção",
+        description: "Por favor, selecione um valor para doar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedNucleo) {
+      toast({
+        title: "Atenção",
+        description: "Por favor, selecione um núcleo regional.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Atenção",
+        description: "Você precisa estar logado para doar.",
+        variant: "destructive"
+      });
+      navigate("/auth");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const { error } = await supabase
+        .from('donations')
+        .insert([
+          {
+            user_id: user.id,
+            amount: parseFloat(amount),
+            is_recurring: isRecurring,
+            nucleus: selectedNucleo,
+            payment_status: 'pending'
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Doação registrada!",
+        description: `Sua ${isRecurring ? 'doação mensal' : 'doação única'} de R$ ${amount} foi registrada com sucesso. Em breve você receberá instruções para pagamento.`
+      });
+
+      // Reset form
+      setSelectedAmount("");
+      setCustomAmount("");
+      setSelectedNucleo("");
+    } catch (error) {
+      console.error('Error processing donation:', error);
+      toast({
+        title: "Erro ao processar doação",
+        description: "Ocorreu um erro ao registrar sua doação. Por favor, tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -163,10 +241,11 @@ export function DonationSection() {
             <Button 
               className="w-full" 
               variant="donation"
-              disabled={!customAmount && !selectedAmount}
+              disabled={(!customAmount && !selectedAmount) || !selectedNucleo || isProcessing}
+              onClick={handleContinueDonation}
             >
               <Heart className="w-4 h-4" />
-              Continuar Doação
+              {isProcessing ? "Processando..." : "Continuar Doação"}
             </Button>
           </CardContent>
         </Card>
