@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Menu, Heart, User, LogOut } from "lucide-react";
+import { Menu, Heart, User, LogOut, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import apabbLogo from "@/assets/apabb-logo.jpg";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +16,7 @@ import {
 export function Header() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { isAdmin } = useUserRole();
 
   const handleSignOut = async () => {
     await signOut();
@@ -72,6 +74,12 @@ export function Header() {
                   <User className="w-4 h-4 mr-2" />
                   Meu Perfil
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => navigate('/admin')}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Dashboard Admin
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="w-4 h-4 mr-2" />
                   Sair

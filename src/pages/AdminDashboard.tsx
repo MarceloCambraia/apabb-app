@@ -1,0 +1,392 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
+import { supabase } from '@/integrations/supabase/client';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Users, Heart, HandHeart, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface Stats {
+  totalDonations: number;
+  totalAmount: number;
+  totalAssociates: number;
+  totalVolunteers: number;
+}
+
+interface Donation {
+  id: string;
+  amount: number;
+  is_recurring: boolean;
+  payment_status: string;
+  created_at: string;
+  user_id: string;
+}
+
+interface Associate {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  relationship: string;
+  created_at: string;
+}
+
+interface Volunteer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  interest_area: string;
+  created_at: string;
+}
+
+const nucleusNames: Record<string, string> = {
+  df: 'Brasília - DF',
+  sp: 'São Paulo - SP',
+  rj: 'Rio de Janeiro - RJ',
+  mg: 'Belo Horizonte - MG',
+  rs: 'Porto Alegre - RS',
+  ba: 'Salvador - BA',
+  pr: 'Curitiba - PR',
+  ce: 'Fortaleza - CE',
+  pe: 'Recife - PE',
+  go: 'Goiânia - GO',
+  pa: 'Belém - PA',
+  sc: 'Florianópolis - SC',
+  es: 'Vitória - ES',
+  rn: 'Natal - RN',
+  se: 'Aracaju - SE',
+};
+
+export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, nucleus, loading: roleLoading } = useUserRole();
+  const [stats, setStats] = useState<Stats>({
+    totalDonations: 0,
+    totalAmount: 0,
+    totalAssociates: 0,
+    totalVolunteers: 0,
+  });
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [associates, setAssociates] = useState<Associate[]>([]);
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authLoading && !roleLoading) {
+      if (!user || !isAdmin) {
+        navigate('/');
+      }
+    }
+  }, [user, isAdmin, authLoading, roleLoading, navigate]);
+
+  useEffect(() => {
+    if (isAdmin && nucleus) {
+      fetchDashboardData();
+    }
+  }, [isAdmin, nucleus]);
+
+  const fetchDashboardData = async () => {
+    if (!nucleus) return;
+
+    try {
+      setLoading(true);
+
+      // Fetch donations
+      const { data: donationsData, error: donationsError } = await supabase
+        .from('donations')
+        .select('*')
+        .eq('nucleus', nucleus)
+        .order('created_at', { ascending: false });
+
+      if (donationsError) throw donationsError;
+
+      // Fetch associates
+      const { data: associatesData, error: associatesError } = await supabase
+        .from('associates')
+        .select('*')
+        .eq('nucleus', nucleus)
+        .order('created_at', { ascending: false });
+
+      if (associatesError) throw associatesError;
+
+      // Fetch volunteers
+      const { data: volunteersData, error: volunteersError } = await supabase
+        .from('volunteers')
+        .select('*')
+        .eq('nucleus', nucleus)
+        .order('created_at', { ascending: false });
+
+      if (volunteersError) throw volunteersError;
+
+      // Calculate stats
+      const totalAmount = donationsData?.reduce((sum, d) => sum + Number(d.amount), 0) || 0;
+
+      setStats({
+        totalDonations: donationsData?.length || 0,
+        totalAmount,
+        totalAssociates: associatesData?.length || 0,
+        totalVolunteers: volunteersData?.length || 0,
+      });
+
+      setDonations(donationsData || []);
+      setAssociates(associatesData || []);
+      setVolunteers(volunteersData || []);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading || roleLoading || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-12">
+          <Skeleton className="h-12 w-64 mb-8" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-32" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-12">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-2">Dashboard Administrativo</h1>
+          <p className="text-muted-foreground text-lg">
+            {nucleus && nucleusNames[nucleus]}
+          </p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Doações</CardTitle>
+              <Heart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalDonations}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                R$ {stats.totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Associados</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalAssociates}</div>
+              <p className="text-xs text-muted-foreground mt-1">Pessoas cadastradas</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Voluntários</CardTitle>
+              <HandHeart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalVolunteers}</div>
+              <p className="text-xs text-muted-foreground mt-1">Pessoas interessadas</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                R$ {stats.totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Em doações</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="donations" className="w-full">
+          <TabsList>
+            <TabsTrigger value="donations">Doações</TabsTrigger>
+            <TabsTrigger value="associates">Associados</TabsTrigger>
+            <TabsTrigger value="volunteers">Voluntários</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="donations" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Doações Recentes</CardTitle>
+                <CardDescription>Lista de todas as doações do seu núcleo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-16 w-full" />
+                    ))}
+                  </div>
+                ) : donations.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Nenhuma doação encontrada</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Doador</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Data</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {donations.map((donation) => (
+                        <TableRow key={donation.id}>
+                          <TableCell>Doador</TableCell>
+                          <TableCell>R$ {Number(donation.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                          <TableCell>
+                            {donation.is_recurring ? (
+                              <Badge variant="default">Recorrente</Badge>
+                            ) : (
+                              <Badge variant="secondary">Única</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={donation.payment_status === 'completed' ? 'default' : 'secondary'}>
+                              {donation.payment_status === 'pending' ? 'Pendente' : 
+                               donation.payment_status === 'completed' ? 'Completo' : 
+                               donation.payment_status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{new Date(donation.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="associates" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Associados</CardTitle>
+                <CardDescription>Lista de todos os associados do seu núcleo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-16 w-full" />
+                    ))}
+                  </div>
+                ) : associates.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Nenhum associado encontrado</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead>Vínculo</TableHead>
+                        <TableHead>Data</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {associates.map((associate) => (
+                        <TableRow key={associate.id}>
+                          <TableCell className="font-medium">{associate.name}</TableCell>
+                          <TableCell>{associate.email}</TableCell>
+                          <TableCell>{associate.phone}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {associate.relationship === 'pcd' ? 'PCD' :
+                               associate.relationship === 'pai' ? 'Pai/Mãe' :
+                               associate.relationship === 'familiar' ? 'Familiar' :
+                               associate.relationship === 'bb' ? 'Func. BB' :
+                               'Comunidade'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{new Date(associate.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="volunteers" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Voluntários</CardTitle>
+                <CardDescription>Lista de todos os voluntários do seu núcleo</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-16 w-full" />
+                    ))}
+                  </div>
+                ) : volunteers.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Nenhum voluntário encontrado</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead>Área de Interesse</TableHead>
+                        <TableHead>Data</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {volunteers.map((volunteer) => (
+                        <TableRow key={volunteer.id}>
+                          <TableCell className="font-medium">{volunteer.name}</TableCell>
+                          <TableCell>{volunteer.email}</TableCell>
+                          <TableCell>{volunteer.phone}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{volunteer.interest_area}</Badge>
+                          </TableCell>
+                          <TableCell>{new Date(volunteer.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
