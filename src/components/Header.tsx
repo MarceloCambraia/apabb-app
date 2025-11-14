@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, Heart, User, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import apabbLogo from "@/assets/apabb-logo.png";
+import apabbLogo from "@/assets/apabb-logo.jpg";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,

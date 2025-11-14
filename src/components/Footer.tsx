@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Heart, Mail, Phone, MapPin, Facebook, Instagram, Twitter } from "lucide-react";
-import apabbLogo from "@/assets/apabb-logo.png";
+import apabbLogo from "@/assets/apabb-logo.jpg";
 
 export function Footer() {
   return (

@@ -26,11 +26,11 @@ export function Hero() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button variant="hero" size="xl" className="text-lg">
+            <Button variant="outline" size="xl" className="text-lg border-primary text-primary hover:bg-white hover:scale-105 transition-bounce shadow-medium">
               <Heart className="w-5 h-5" />
               Começar a Doar
             </Button>
-            <Button variant="outline" size="xl" className="text-lg border-white text-white hover:bg-white hover:text-primary">
+            <Button variant="hero" size="xl" className="text-lg">
               <Users className="w-5 h-5" />
               Saiba Mais
             </Button>
