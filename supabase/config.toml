@@ -1,1 +1,7 @@
 project_id = "hyuwbysahezxobqcnbhc"
+
+[functions.create-admin-users]
+verify_jwt = false
+
+[functions.fetch-apabb-news]
+verify_jwt = false
