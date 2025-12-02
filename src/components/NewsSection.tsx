@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, ArrowRight, ExternalLink, Newspaper } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, ExternalLink, Newspaper, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface NewsItem {
@@ -15,9 +16,33 @@ interface NewsItem {
   nucleus?: string;
 }
 
+const NUCLEOS = [
+  "Todos",
+  "Porto Alegre",
+  "Florianópolis", 
+  "Curitiba",
+  "São Paulo",
+  "Rio de Janeiro",
+  "Vitória",
+  "Belo Horizonte",
+  "Brasília",
+  "Goiânia",
+  "Salvador",
+  "Aracaju",
+  "Recife",
+  "Natal",
+  "Fortaleza",
+  "Belém"
+];
+
 export function NewsSection() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedNucleus, setSelectedNucleus] = useState("Todos");
+
+  const filteredNews = selectedNucleus === "Todos" 
+    ? news 
+    : news.filter(item => item.nucleus?.toLowerCase().includes(selectedNucleus.toLowerCase()));
 
   useEffect(() => {
     async function fetchNews() {
@@ -62,6 +87,25 @@ export function NewsSection() {
           </p>
         </div>
 
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-primary" />
+            <span className="text-sm font-medium text-muted-foreground">Filtrar por Núcleo:</span>
+          </div>
+          <Select value={selectedNucleus} onValueChange={setSelectedNucleus}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Selecione um núcleo" />
+            </SelectTrigger>
+            <SelectContent>
+              {NUCLEOS.map((nucleo) => (
+                <SelectItem key={nucleo} value={nucleo}>
+                  {nucleo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -78,9 +122,22 @@ export function NewsSection() {
               </Card>
             ))}
           </div>
+        ) : filteredNews.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">
+              Nenhuma notícia encontrada para o núcleo {selectedNucleus}.
+            </p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => setSelectedNucleus("Todos")}
+            >
+              Ver todas as notícias
+            </Button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {news.map((item) => (
+            {filteredNews.map((item) => (
               <Card 
                 key={item.id} 
                 className="overflow-hidden shadow-soft hover:shadow-medium transition-smooth cursor-pointer group"
