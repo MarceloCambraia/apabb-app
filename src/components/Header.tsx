@@ -47,6 +47,9 @@ export function Header() {
           <Link to="/voluntariado" className="text-sm font-medium hover:text-primary transition-smooth">
             Voluntariado
           </Link>
+          <Link to="/noticias" className="text-sm font-medium hover:text-primary transition-smooth">
+            Notícias
+          </Link>
           <Link to="/associar" className="text-sm font-medium hover:text-primary transition-smooth">
             Associar-se
           </Link>
