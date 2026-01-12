@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Heart, Users, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 
 // Import all hero images
@@ -114,9 +115,11 @@ export function Hero() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button variant="outline" size="xl" className="text-lg border-primary text-primary hover:bg-white hover:scale-105 transition-bounce shadow-medium">
-              <Heart className="w-5 h-5" />
-              Começar a Doar
+            <Button variant="outline" size="xl" className="text-lg border-primary text-primary hover:bg-white hover:scale-105 transition-bounce shadow-medium" asChild>
+              <Link to="/doar">
+                <Heart className="w-5 h-5" />
+                Começar a Doar
+              </Link>
             </Button>
             <Button variant="hero" size="xl" className="text-lg">
               <Users className="w-5 h-5" />
