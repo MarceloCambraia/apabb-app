@@ -1,265 +1,617 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
-import { Repeat, CreditCard, Heart, Gift, ExternalLink, Copy, Check, QrCode, Banknote, Building2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import qrCodePix from "@/assets/qrcode-pix-apabb.png";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Heart, CreditCard, Building2, FileText, Wallet, 
+  User, Mail, Phone, MapPin, Calendar, Loader2, CheckCircle2, AlertCircle
+} from "lucide-react";
+import { 
+  useDonation, 
+  formatCurrency, 
+  formatCpfCnpj, 
+  formatPhone, 
+  formatCep, 
+  formatCardNumber 
+} from "@/hooks/useDonation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const donationOptions = [
-  {
-    amount: "25",
-    description: "Apoiador",
-    isRecommended: false
-  },
-  {
-    amount: "40",
-    description: "Parceiro",
-    isRecommended: false
-  },
-  {
-    amount: "60",
-    description: "Protetor",
-    isRecommended: true
-  },
-  {
-    amount: "100",
-    description: "Anjo",
-    isRecommended: false
-  }
+const donationAmounts = [
+  { value: 25, label: "R$ 25", tier: "Apoiador" },
+  { value: 40, label: "R$ 40", tier: "Parceiro" },
+  { value: 60, label: "R$ 60", tier: "Protetor", recommended: true },
+  { value: 100, label: "R$ 100", tier: "Anjo" },
 ];
 
-const APABB_PIX_KEY = "58.106.519/0001-39";
-const APABB_DONATION_URL = "https://www.apabb.org.br/quero-doar.html#ser-mantenedor";
+const paymentMethods = [
+  { value: "debit_bb", label: "Débito em Conta BB", icon: Building2, description: "Banco do Brasil" },
+  { value: "credit_card", label: "Cartão de Crédito", icon: CreditCard, description: "Visa, Master, Elo" },
+  { value: "boleto", label: "Boleto Bancário", icon: FileText, description: "Vencimento em 3 dias" },
+  { value: "payroll", label: "Folha de Pagamento", icon: Wallet, description: "Exclusivo aposentados BB" },
+];
+
+const genderOptions = [
+  { value: "M", label: "Masculino" },
+  { value: "F", label: "Feminino" },
+  { value: "O", label: "Outro" },
+];
+
+const brazilianStates = [
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+  "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+  "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+];
 
 export function DonationSection() {
-  const [selectedAmount, setSelectedAmount] = useState<string>("");
-  const [copied, setCopied] = useState(false);
-  const { toast } = useToast();
+  const {
+    step,
+    selectedAmount,
+    paymentMethod,
+    isRecurring,
+    formData,
+    errors,
+    isSubmitting,
+    setAmount,
+    setPaymentMethod,
+    setIsRecurring,
+    updateFormData,
+    fetchAddressByCep,
+    submitDonation,
+    resetForm,
+  } = useDonation();
 
-  const handleCopyPix = async () => {
-    try {
-      await navigator.clipboard.writeText(APABB_PIX_KEY);
-      setCopied(true);
-      toast({
-        title: "Chave PIX copiada!",
-        description: "Cole no seu aplicativo bancário para fazer a doação.",
-      });
-      setTimeout(() => setCopied(false), 3000);
-    } catch (error) {
-      toast({
-        title: "Erro ao copiar",
-        description: "Por favor, copie manualmente: " + APABB_PIX_KEY,
-        variant: "destructive"
-      });
+  const [customAmount, setCustomAmount] = useState("");
+  const [useCustomAmount, setUseCustomAmount] = useState(false);
+
+  // Atualiza o valor quando digita valor customizado
+  useEffect(() => {
+    if (useCustomAmount && customAmount) {
+      const value = parseInt(customAmount.replace(/\D/g, "")) / 100;
+      if (value > 0) {
+        setAmount(value);
+      }
     }
+  }, [customAmount, useCustomAmount, setAmount]);
+
+  const handleCepBlur = (cep: string) => {
+    fetchAddressByCep(cep);
   };
 
-  const handleOpenApabbSite = () => {
-    window.open(APABB_DONATION_URL, "_blank", "noopener,noreferrer");
-  };
+  if (step === "success") {
+    return (
+      <section className="py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto text-center shadow-strong">
+            <CardContent className="pt-12 pb-8">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-4 text-foreground">Doação Registrada!</h2>
+              <p className="text-muted-foreground mb-6">
+                Obrigado por apoiar a APABB. Você receberá um e-mail de confirmação com os próximos passos.
+              </p>
+              <Button onClick={resetForm} variant="outline">
+                Fazer Nova Doação
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  if (step === "error") {
+    return (
+      <section className="py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto text-center shadow-strong">
+            <CardContent className="pt-12 pb-8">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertCircle className="w-10 h-10 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold mb-4 text-foreground">Erro ao Processar</h2>
+              <p className="text-muted-foreground mb-6">
+                Houve um problema ao processar sua doação. Por favor, tente novamente.
+              </p>
+              <Button onClick={resetForm} className="bg-destructive hover:bg-destructive/90">
+                Tentar Novamente
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="py-20 bg-gradient-to-b from-background to-muted/20">
+    <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
+        {/* Header */}
+        <div className="text-center mb-10">
           <Badge className="mb-4 bg-secondary/10 text-secondary hover:bg-secondary/20">
             <Heart className="w-4 h-4 mr-1" />
             Faça a Diferença
           </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">
-            Escolha como ajudar
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+            Apoie a APABB
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Sua doação garante apoio contínuo às pessoas com deficiência e suas famílias
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {/* Seção PIX */}
-          <Card className="shadow-medium border-2 border-primary/20 overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-secondary/5 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <QrCode className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Doação via PIX</CardTitle>
-                  <CardDescription>Rápido e sem taxas</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-6">
-              {/* Valores sugeridos */}
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-3">
-                  Valores sugeridos para doação mensal:
-                </p>
-                <div className="grid grid-cols-4 gap-2">
-                  {donationOptions.map((option) => (
-                    <button
-                      key={option.amount}
-                      onClick={() => setSelectedAmount(option.amount)}
-                      className={`relative p-3 rounded-lg border-2 transition-all hover:scale-105 ${
-                        selectedAmount === option.amount
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/50"
-                      } ${option.isRecommended ? "ring-2 ring-secondary ring-offset-2" : ""}`}
-                    >
-                      {option.isRecommended && (
-                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full whitespace-nowrap">
-                          Recomendado
-                        </span>
-                      )}
-                      <div className="text-lg font-bold text-foreground">R$ {option.amount}</div>
-                      <div className="text-xs text-muted-foreground">{option.description}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* QR Code */}
-              <div className="flex flex-col items-center bg-white rounded-xl p-4 border">
-                <img 
-                  src={qrCodePix} 
-                  alt="QR Code PIX APABB" 
-                  className="w-48 h-48 object-contain"
-                />
-                <p className="text-sm text-muted-foreground mt-2 text-center">
-                  Escaneie o QR Code com o app do seu banco
-                </p>
-              </div>
-
-              {/* Chave PIX */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Ou copie a chave PIX (CNPJ):
-                </p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-muted px-4 py-3 rounded-lg text-sm font-mono text-foreground">
-                    {APABB_PIX_KEY}
-                  </code>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    onClick={handleCopyPix}
-                    className="h-12 w-12"
+        <Card className="max-w-4xl mx-auto shadow-strong">
+          <CardContent className="p-6 md:p-8 space-y-8">
+            
+            {/* 1. Seleção de Valor */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
+                <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">1</span>
+                Escolha o Valor
+              </h3>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {donationAmounts.map((amount) => (
+                  <button
+                    key={amount.value}
+                    onClick={() => {
+                      setAmount(amount.value);
+                      setUseCustomAmount(false);
+                    }}
+                    className={`relative p-4 rounded-xl border-2 transition-all hover:scale-105 ${
+                      selectedAmount === amount.value && !useCustomAmount
+                        ? "border-primary bg-primary/10 shadow-md"
+                        : "border-border hover:border-primary/50"
+                    } ${amount.recommended ? "ring-2 ring-secondary ring-offset-2" : ""}`}
                   >
-                    {copied ? (
-                      <Check className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <Copy className="w-5 h-5" />
+                    {amount.recommended && (
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full whitespace-nowrap font-medium">
+                        Recomendado
+                      </span>
                     )}
-                  </Button>
-                </div>
+                    <div className="text-xl font-bold text-foreground">{amount.label}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{amount.tier}</div>
+                  </button>
+                ))}
               </div>
 
-              {/* Instruções */}
-              <div className="bg-muted/50 rounded-lg p-4 text-sm">
-                <p className="font-medium mb-2">Como doar via PIX:</p>
-                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                  <li>Abra o app do seu banco</li>
-                  <li>Acesse a opção PIX</li>
-                  <li>Escaneie o QR Code ou cole a chave</li>
-                  <li>Informe o valor e confirme</li>
-                </ol>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Outras formas de pagamento */}
-          <Card className="shadow-medium overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-secondary/5 to-primary/5 pb-4">
+              {/* Outro Valor */}
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
-                  <CreditCard className="w-6 h-6 text-secondary" />
+                <input
+                  type="checkbox"
+                  id="customAmount"
+                  checked={useCustomAmount}
+                  onChange={(e) => setUseCustomAmount(e.target.checked)}
+                  className="w-4 h-4 rounded border-primary text-primary"
+                />
+                <Label htmlFor="customAmount" className="text-sm">Outro valor:</Label>
+                <Input
+                  type="text"
+                  placeholder="R$ 0,00"
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(formatCurrency(e.target.value))}
+                  disabled={!useCustomAmount}
+                  className="max-w-[150px]"
+                />
+              </div>
+
+              {/* Toggle Recorrente */}
+              <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="recurring"
+                  checked={isRecurring}
+                  onChange={(e) => setIsRecurring(e.target.checked)}
+                  className="w-5 h-5 rounded border-primary text-primary"
+                />
+                <Label htmlFor="recurring" className="flex-1">
+                  <span className="font-medium">Doação Mensal Recorrente</span>
+                  <p className="text-sm text-muted-foreground">
+                    Doadores recorrentes têm acesso ao Clube de Benefícios APABB
+                  </p>
+                </Label>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* 2. Forma de Doação */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
+                <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">2</span>
+                Forma de Doação
+              </h3>
+              
+              <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {paymentMethods.map((method) => (
+                  <Label
+                    key={method.value}
+                    htmlFor={method.value}
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      paymentMethod === method.value
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <RadioGroupItem value={method.value} id={method.value} />
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <method.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-foreground">{method.label}</div>
+                      <div className="text-xs text-muted-foreground">{method.description}</div>
+                    </div>
+                  </Label>
+                ))}
+              </RadioGroup>
+
+              {errors.paymentMethod && (
+                <p className="text-sm text-destructive">{errors.paymentMethod}</p>
+              )}
+
+              {/* Campos Dinâmicos - Cartão de Crédito */}
+              {paymentMethod === "credit_card" && (
+                <div className="mt-4 p-4 bg-muted/30 rounded-xl space-y-4 animate-in slide-in-from-top-2">
+                  <h4 className="font-medium text-foreground flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    Dados do Cartão
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <Label htmlFor="cardName">Nome no Cartão</Label>
+                      <Input
+                        id="cardName"
+                        placeholder="NOME COMO ESTÁ NO CARTÃO"
+                        value={formData.cardName || ""}
+                        onChange={(e) => updateFormData({ cardName: e.target.value.toUpperCase() })}
+                        className="uppercase"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="cardNumber">Número do Cartão</Label>
+                      <Input
+                        id="cardNumber"
+                        placeholder="0000 0000 0000 0000"
+                        value={formData.cardNumber || ""}
+                        onChange={(e) => updateFormData({ cardNumber: formatCardNumber(e.target.value) })}
+                        maxLength={19}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cardCvv">CVV</Label>
+                      <Input
+                        id="cardCvv"
+                        placeholder="000"
+                        value={formData.cardCvv || ""}
+                        onChange={(e) => updateFormData({ cardCvv: e.target.value.replace(/\D/g, "").slice(0, 4) })}
+                        maxLength={4}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="cardExpiryMonth">Mês</Label>
+                        <Select
+                          value={formData.cardExpiryMonth || ""}
+                          onValueChange={(value) => updateFormData({ cardExpiryMonth: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Mês" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 12 }, (_, i) => (
+                              <SelectItem key={i + 1} value={String(i + 1).padStart(2, "0")}>
+                                {String(i + 1).padStart(2, "0")}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="cardExpiryYear">Ano</Label>
+                        <Select
+                          value={formData.cardExpiryYear || ""}
+                          onValueChange={(value) => updateFormData({ cardExpiryYear: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Ano" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 10 }, (_, i) => {
+                              const year = new Date().getFullYear() + i;
+                              return (
+                                <SelectItem key={year} value={String(year)}>
+                                  {year}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                  {errors.card && <p className="text-sm text-destructive">{errors.card}</p>}
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    🔒 Seus dados são criptografados e não armazenados localmente
+                  </p>
                 </div>
+              )}
+
+              {/* Campos Dinâmicos - Débito BB */}
+              {paymentMethod === "debit_bb" && (
+                <div className="mt-4 p-4 bg-muted/30 rounded-xl space-y-4 animate-in slide-in-from-top-2">
+                  <h4 className="font-medium text-foreground flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Dados Bancários - Banco do Brasil
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="bankAgency">Agência</Label>
+                      <Input
+                        id="bankAgency"
+                        placeholder="0000-0"
+                        value={formData.bankAgency || ""}
+                        onChange={(e) => updateFormData({ bankAgency: e.target.value.replace(/\D/g, "").slice(0, 5) })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bankAccount">Conta Corrente</Label>
+                      <Input
+                        id="bankAccount"
+                        placeholder="00000-0"
+                        value={formData.bankAccount || ""}
+                        onChange={(e) => updateFormData({ bankAccount: e.target.value.replace(/\D/g, "").slice(0, 8) })}
+                      />
+                    </div>
+                  </div>
+                  {errors.bank && <p className="text-sm text-destructive">{errors.bank}</p>}
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* 3. Dados Pessoais */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
+                <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">3</span>
+                Dados Pessoais
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <Label htmlFor="fullName" className="flex items-center gap-2">
+                    <User className="w-4 h-4" /> Nome Completo
+                  </Label>
+                  <Input
+                    id="fullName"
+                    placeholder="Seu nome completo"
+                    value={formData.fullName || ""}
+                    onChange={(e) => updateFormData({ fullName: e.target.value })}
+                    className={errors.fullName ? "border-destructive" : ""}
+                  />
+                  {errors.fullName && <p className="text-sm text-destructive mt-1">{errors.fullName}</p>}
+                </div>
+
                 <div>
-                  <CardTitle className="text-xl">Outras Formas</CardTitle>
-                  <CardDescription>Mais opções de pagamento</CardDescription>
+                  <Label htmlFor="cpfCnpj">CPF/CNPJ</Label>
+                  <Input
+                    id="cpfCnpj"
+                    placeholder="000.000.000-00"
+                    value={formData.cpfCnpj || ""}
+                    onChange={(e) => updateFormData({ cpfCnpj: formatCpfCnpj(e.target.value) })}
+                    maxLength={18}
+                    className={errors.cpfCnpj ? "border-destructive" : ""}
+                  />
+                  {errors.cpfCnpj && <p className="text-sm text-destructive mt-1">{errors.cpfCnpj}</p>}
+                </div>
+
+                <div>
+                  <Label htmlFor="birthDate" className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" /> Data de Nascimento
+                  </Label>
+                  <Input
+                    id="birthDate"
+                    type="date"
+                    value={formData.birthDate || ""}
+                    onChange={(e) => updateFormData({ birthDate: e.target.value })}
+                    className={errors.birthDate ? "border-destructive" : ""}
+                  />
+                  {errors.birthDate && <p className="text-sm text-destructive mt-1">{errors.birthDate}</p>}
+                </div>
+
+                <div>
+                  <Label htmlFor="gender">Sexo</Label>
+                  <Select
+                    value={formData.gender || ""}
+                    onValueChange={(value) => updateFormData({ gender: value as "M" | "F" | "O" })}
+                  >
+                    <SelectTrigger className={errors.gender ? "border-destructive" : ""}>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {genderOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.gender && <p className="text-sm text-destructive mt-1">{errors.gender}</p>}
+                </div>
+
+                <div>
+                  <Label htmlFor="email" className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" /> E-mail
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={formData.email || ""}
+                    onChange={(e) => updateFormData({ email: e.target.value })}
+                    className={errors.email ? "border-destructive" : ""}
+                  />
+                  {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
+                </div>
+
+                <div>
+                  <Label htmlFor="phone" className="flex items-center gap-2">
+                    <Phone className="w-4 h-4" /> Telefone
+                  </Label>
+                  <Input
+                    id="phone"
+                    placeholder="(00) 00000-0000"
+                    value={formData.phone || ""}
+                    onChange={(e) => updateFormData({ phone: formatPhone(e.target.value) })}
+                    maxLength={15}
+                    className={errors.phone ? "border-destructive" : ""}
+                  />
+                  {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone}</p>}
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-6">
-              <p className="text-muted-foreground">
-                Acesse o site oficial da APABB para mais opções de doação:
-              </p>
+            </div>
 
-              {/* Lista de opções disponíveis */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <CreditCard className="w-5 h-5 text-primary" />
-                  <span className="text-sm">Cartão de Crédito</span>
+            <Separator />
+
+            {/* 4. Endereço */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-foreground">
+                <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">4</span>
+                Endereço
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="cep" className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" /> CEP
+                  </Label>
+                  <Input
+                    id="cep"
+                    placeholder="00000-000"
+                    value={formData.cep || ""}
+                    onChange={(e) => updateFormData({ cep: formatCep(e.target.value) })}
+                    onBlur={(e) => handleCepBlur(e.target.value)}
+                    maxLength={9}
+                    className={errors.cep ? "border-destructive" : ""}
+                  />
+                  {errors.cep && <p className="text-sm text-destructive mt-1">{errors.cep}</p>}
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Banknote className="w-5 h-5 text-primary" />
-                  <span className="text-sm">Boleto Bancário</span>
+
+                <div className="md:col-span-2">
+                  <Label htmlFor="address">Endereço</Label>
+                  <Input
+                    id="address"
+                    placeholder="Rua, Avenida..."
+                    value={formData.address || ""}
+                    onChange={(e) => updateFormData({ address: e.target.value })}
+                    className={errors.address ? "border-destructive" : ""}
+                  />
+                  {errors.address && <p className="text-sm text-destructive mt-1">{errors.address}</p>}
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Building2 className="w-5 h-5 text-primary" />
-                  <span className="text-sm">Débito em Conta BB</span>
+
+                <div>
+                  <Label htmlFor="number">Número</Label>
+                  <Input
+                    id="number"
+                    placeholder="123"
+                    value={formData.number || ""}
+                    onChange={(e) => updateFormData({ number: e.target.value })}
+                    className={errors.number ? "border-destructive" : ""}
+                  />
+                  {errors.number && <p className="text-sm text-destructive mt-1">{errors.number}</p>}
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Repeat className="w-5 h-5 text-primary" />
-                  <span className="text-sm">Doação Recorrente</span>
+
+                <div>
+                  <Label htmlFor="complement">Complemento</Label>
+                  <Input
+                    id="complement"
+                    placeholder="Apto, Bloco..."
+                    value={formData.complement || ""}
+                    onChange={(e) => updateFormData({ complement: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="neighborhood">Bairro</Label>
+                  <Input
+                    id="neighborhood"
+                    placeholder="Bairro"
+                    value={formData.neighborhood || ""}
+                    onChange={(e) => updateFormData({ neighborhood: e.target.value })}
+                    className={errors.neighborhood ? "border-destructive" : ""}
+                  />
+                  {errors.neighborhood && <p className="text-sm text-destructive mt-1">{errors.neighborhood}</p>}
+                </div>
+
+                <div>
+                  <Label htmlFor="city">Cidade</Label>
+                  <Input
+                    id="city"
+                    placeholder="Cidade"
+                    value={formData.city || ""}
+                    onChange={(e) => updateFormData({ city: e.target.value })}
+                    className={errors.city ? "border-destructive" : ""}
+                  />
+                  {errors.city && <p className="text-sm text-destructive mt-1">{errors.city}</p>}
+                </div>
+
+                <div>
+                  <Label htmlFor="state">Estado</Label>
+                  <Select
+                    value={formData.state || ""}
+                    onValueChange={(value) => updateFormData({ state: value })}
+                  >
+                    <SelectTrigger className={errors.state ? "border-destructive" : ""}>
+                      <SelectValue placeholder="UF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brazilianStates.map((uf) => (
+                        <SelectItem key={uf} value={uf}>
+                          {uf}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.state && <p className="text-sm text-destructive mt-1">{errors.state}</p>}
                 </div>
               </div>
+            </div>
 
-              {/* Dados bancários */}
-              <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-                <p className="font-medium text-sm mb-2 flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
-                  Dados Bancários - Banco do Brasil
-                </p>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>Agência: <span className="font-mono text-foreground">3324-3</span></p>
-                  <p>Conta Corrente: <span className="font-mono text-foreground">456700-5</span></p>
-                  <p>CNPJ: <span className="font-mono text-foreground">58.106.519/0001-39</span></p>
-                </div>
-              </div>
+            <Separator />
 
-              {/* Botão para site externo */}
-              <Button 
-                variant="donation" 
-                size="lg" 
-                className="w-full"
-                onClick={handleOpenApabbSite}
+            {/* Botão de Enviar */}
+            <div className="pt-4">
+              <Button
+                size="lg"
+                className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground text-lg py-6"
+                onClick={submitDonation}
+                disabled={isSubmitting || !paymentMethod}
               >
-                <ExternalLink className="w-5 h-5" />
-                Acessar Site de Doações
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <Heart className="w-5 h-5 mr-2" />
+                    Enviar Doação de {selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    {isRecurring && "/mês"}
+                  </>
+                )}
               </Button>
-
-              <p className="text-xs text-center text-muted-foreground">
-                Você será redirecionado para o site oficial da APABB
+              
+              <p className="text-xs text-center text-muted-foreground mt-4">
+                🔒 Seus dados são protegidos e criptografados. 
+                Dados sensíveis de pagamento nunca são armazenados localmente.
               </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Benefícios Clube do Doador */}
-        <div className="mt-16 text-center">
-          <div className="gradient-card rounded-2xl p-8 max-w-2xl mx-auto shadow-medium">
-            <div className="text-secondary mb-4">
-              <Gift className="w-12 h-12 mx-auto" />
             </div>
-            <h3 className="text-2xl font-bold mb-4 text-foreground">
-              Clube do Doador Recorrente
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              Doadores mensais têm acesso exclusivo a descontos e benefícios em empresas parceiras
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 text-sm">
-              <div className="flex items-center gap-2 bg-background/50 px-4 py-2 rounded-full">
-                <CreditCard className="w-4 h-4 text-secondary" />
-                <span>Descontos exclusivos</span>
-              </div>
-              <div className="flex items-center gap-2 bg-background/50 px-4 py-2 rounded-full">
-                <Heart className="w-4 h-4 text-secondary" />
-                <span>Certificado de doador</span>
-              </div>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </section>
   );
