@@ -1,72 +1,78 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MapPin, Users, Heart, Target } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/hooks/use-toast';
+import { MapPin, Target, CheckCircle, UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const projects = [
-  {
-    id: 1,
-    nucleo: "Brasília - DF",
-    title: "Programa de Inclusão Digital",
-    description: "Capacitação em tecnologia para jovens e adultos com deficiência",
-    beneficiados: 150,
-    status: "Em andamento",
-    meta: "R$ 50.000",
-    arrecadado: "R$ 35.000"
-  },
-  {
-    id: 2,
-    nucleo: "São Paulo - SP",
-    title: "Esporte Adaptado",
-    description: "Atividades esportivas inclusivas para crianças e adolescentes",
-    beneficiados: 200,
-    status: "Em andamento",
-    meta: "R$ 80.000",
-    arrecadado: "R$ 65.000"
-  },
-  {
-    id: 3,
-    nucleo: "Rio de Janeiro - RJ",
-    title: "Arte e Cultura Inclusiva",
-    description: "Oficinas de arte, música e teatro para pessoas com deficiência",
-    beneficiados: 120,
-    status: "Concluído",
-    meta: "R$ 40.000",
-    arrecadado: "R$ 40.000"
-  },
-  {
-    id: 4,
-    nucleo: "Porto Alegre - RS",
-    title: "Apoio às Famílias",
-    description: "Grupos de apoio e orientação para familiares de pessoas com deficiência",
-    beneficiados: 300,
-    status: "Em andamento",
-    meta: "R$ 60.000",
-    arrecadado: "R$ 48.000"
-  },
-  {
-    id: 5,
-    nucleo: "Belo Horizonte - MG",
-    title: "Qualificação Profissional",
-    description: "Cursos e workshops para inserção no mercado de trabalho",
-    beneficiados: 180,
-    status: "Em andamento",
-    meta: "R$ 70.000",
-    arrecadado: "R$ 52.000"
-  },
-  {
-    id: 6,
-    nucleo: "Fortaleza - CE",
-    title: "Mobilidade e Acessibilidade",
-    description: "Adequação de espaços e promoção da autonomia",
-    beneficiados: 250,
-    status: "Em andamento",
-    meta: "R$ 90.000",
-    arrecadado: "R$ 70.000"
-  }
-];
+const nucleusNames: Record<string, string> = {
+  df: 'Brasília - DF', sp: 'São Paulo - SP', rj: 'Rio de Janeiro - RJ',
+  mg: 'Belo Horizonte - MG', rs: 'Porto Alegre - RS', ba: 'Salvador - BA',
+  pr: 'Curitiba - PR', ce: 'Fortaleza - CE', pe: 'Recife - PE',
+  go: 'Goiânia - GO', pa: 'Belém - PA', sc: 'Florianópolis - SC',
+  es: 'Vitória - ES', rn: 'Natal - RN', se: 'Aracaju - SE',
+};
 
 export function ProjectsSection() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const { data: projects, isLoading } = useQuery({
+    queryKey: ['public-projects'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('status', 'ativo')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: myRegistrations } = useQuery({
+    queryKey: ['my-registrations', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('project_registrations')
+        .select('project_id')
+        .eq('user_id', user.id);
+      if (error) throw error;
+      return data.map((r) => r.project_id);
+    },
+    enabled: !!user,
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      if (!user) throw new Error('Login necessário');
+      const { error } = await supabase.from('project_registrations').insert({
+        project_id: projectId,
+        user_id: user.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+      toast({ title: 'Inscrição realizada com sucesso!' });
+    },
+    onError: (err: any) => toast({ title: 'Erro na inscrição', description: err.message, variant: 'destructive' }),
+  });
+
+  const handleRegister = (projectId: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    registerMutation.mutate(projectId);
+  };
+
   return (
     <section id="projetos" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -83,61 +89,55 @@ export function ProjectsSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => {
-            const percentual = (parseFloat(project.arrecadado.replace('R$ ', '').replace('.', '')) / 
-                               parseFloat(project.meta.replace('R$ ', '').replace('.', ''))) * 100;
-            
-            return (
-              <Card key={project.id} className="shadow-soft hover:shadow-medium transition-smooth">
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant={project.status === "Concluído" ? "default" : "secondary"}>
-                      {project.status}
-                    </Badge>
-                    <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                      <MapPin className="w-3 h-3" />
-                      <span>{project.nucleo}</span>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-64" />)}
+          </div>
+        ) : !projects?.length ? (
+          <p className="text-center text-muted-foreground py-12">Nenhum projeto disponível no momento.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project) => {
+              const isRegistered = myRegistrations?.includes(project.id);
+              return (
+                <Card key={project.id} className="shadow-soft hover:shadow-medium transition-smooth flex flex-col">
+                  {project.image_url && (
+                    <div className="h-48 overflow-hidden rounded-t-lg">
+                      <img src={project.image_url} alt={project.title} className="w-full h-full object-cover" />
                     </div>
-                  </div>
-                  <CardTitle className="text-xl">{project.title}</CardTitle>
-                  <CardDescription>{project.description}</CardDescription>
-                </CardHeader>
-                
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Users className="w-4 h-4 text-secondary" />
-                      <span><strong>{project.beneficiados}</strong> pessoas beneficiadas</span>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-muted-foreground">Arrecadado</span>
-                        <span className="font-semibold text-primary">{Math.round(percentual)}%</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="gradient-secondary h-2 rounded-full transition-smooth"
-                          style={{ width: `${Math.min(percentual, 100)}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                        <span>{project.arrecadado}</span>
-                        <span>{project.meta}</span>
+                  )}
+                  <CardHeader>
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="secondary">Ativo</Badge>
+                      <div className="flex items-center gap-1 text-muted-foreground text-sm">
+                        <MapPin className="w-3 h-3" />
+                        <span>{nucleusNames[project.nucleus] || project.nucleus}</span>
                       </div>
                     </div>
-
-                    <Button variant="donation" className="w-full">
-                      <Heart className="w-4 h-4" />
-                      Apoiar Projeto
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    <CardTitle className="text-xl">{project.title}</CardTitle>
+                    <CardDescription className="line-clamp-3">{project.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="mt-auto">
+                    {project.max_slots && (
+                      <p className="text-xs text-muted-foreground mb-3">Vagas: {project.max_slots}</p>
+                    )}
+                    {isRegistered ? (
+                      <Button variant="outline" className="w-full" disabled>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Inscrição Realizada
+                      </Button>
+                    ) : (
+                      <Button className="w-full" onClick={() => handleRegister(project.id)} disabled={registerMutation.isPending}>
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Quero me Inscrever
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );

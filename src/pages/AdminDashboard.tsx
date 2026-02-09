@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Users, Heart, HandHeart, DollarSign, TrendingUp, Calendar } from 'lucide-react';
+import { Users, Heart, HandHeart, DollarSign, TrendingUp, Calendar, FolderKanban } from 'lucide-react';
+import { AdminProjectsManager } from '@/components/AdminProjectsManager';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Stats {
@@ -231,6 +232,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="donations">Doações</TabsTrigger>
             <TabsTrigger value="associates">Associados</TabsTrigger>
             <TabsTrigger value="volunteers">Voluntários</TabsTrigger>
+            <TabsTrigger value="projects">Projetos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="donations" className="mt-6">
@@ -382,6 +384,10 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="projects" className="mt-6">
+            {nucleus && <AdminProjectsManager nucleus={nucleus} />}
           </TabsContent>
         </Tabs>
       </main>
