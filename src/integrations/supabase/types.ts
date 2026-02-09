@@ -140,6 +140,74 @@ export type Database = {
         }
         Relationships: []
       }
+      project_registrations: {
+        Row: {
+          id: string
+          project_id: string
+          registration_date: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          registration_date?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          registration_date?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_registrations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          max_slots: number | null
+          nucleus: string
+          status: Database["public"]["Enums"]["project_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          image_url?: string | null
+          max_slots?: number | null
+          nucleus: string
+          status?: Database["public"]["Enums"]["project_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          max_slots?: number | null
+          nucleus?: string
+          status?: Database["public"]["Enums"]["project_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -219,6 +287,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      project_status: "ativo" | "encerrado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -347,6 +416,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      project_status: ["ativo", "encerrado"],
     },
   },
 } as const
