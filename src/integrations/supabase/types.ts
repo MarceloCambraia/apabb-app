@@ -232,6 +232,77 @@ export type Database = {
         }
         Relationships: []
       }
+      volunteer_opportunities: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          max_slots: number | null
+          nucleus: string
+          status: Database["public"]["Enums"]["project_status"]
+          time_commitment: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          image_url?: string | null
+          max_slots?: number | null
+          nucleus: string
+          status?: Database["public"]["Enums"]["project_status"]
+          time_commitment?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          max_slots?: number | null
+          nucleus?: string
+          status?: Database["public"]["Enums"]["project_status"]
+          time_commitment?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      volunteer_opportunity_registrations: {
+        Row: {
+          id: string
+          opportunity_id: string
+          registration_date: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          opportunity_id: string
+          registration_date?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          opportunity_id?: string
+          registration_date?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "volunteer_opportunity_registrations_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "volunteer_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       volunteers: {
         Row: {
           created_at: string

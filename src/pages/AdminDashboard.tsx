@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Users, Heart, HandHeart, DollarSign, TrendingUp, Calendar, FolderKanban } from 'lucide-react';
 import { AdminProjectsManager } from '@/components/AdminProjectsManager';
+import { AdminVolunteerOpportunitiesManager } from '@/components/AdminVolunteerOpportunitiesManager';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Stats {
@@ -233,6 +234,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="associates">Associados</TabsTrigger>
             <TabsTrigger value="volunteers">Voluntários</TabsTrigger>
             <TabsTrigger value="projects">Projetos</TabsTrigger>
+            <TabsTrigger value="volunteer-opportunities">Voluntariado</TabsTrigger>
           </TabsList>
 
           <TabsContent value="donations" className="mt-6">
@@ -388,6 +390,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="projects" className="mt-6">
             {nucleus && <AdminProjectsManager nucleus={nucleus} />}
+          </TabsContent>
+
+          <TabsContent value="volunteer-opportunities" className="mt-6">
+            {nucleus && <AdminVolunteerOpportunitiesManager nucleus={nucleus} />}
           </TabsContent>
         </Tabs>
       </main>
