@@ -204,14 +204,14 @@ export function AdminProjectsManager({ nucleus }: AdminProjectsManagerProps) {
   // View: projects list
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <CardTitle>Projetos</CardTitle>
+          <CardTitle className="text-xl md:text-2xl">Projetos</CardTitle>
           <CardDescription>Gerencie os projetos do núcleo {nucleusNames[nucleus] || nucleus}</CardDescription>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Novo Projeto</Button>
+            <Button className="w-full md:w-auto"><Plus className="h-4 w-4 mr-2" />Novo Projeto</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -259,39 +259,41 @@ export function AdminProjectsManager({ nucleus }: AdminProjectsManagerProps) {
         ) : !projects?.length ? (
           <p className="text-center text-muted-foreground py-8">Nenhum projeto cadastrado</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Título</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Vagas</TableHead>
-                <TableHead>Criado em</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {projects.map((project) => (
-                <TableRow key={project.id}>
-                  <TableCell className="font-medium">{project.title}</TableCell>
-                  <TableCell>
-                    <Badge variant={project.status === 'ativo' ? 'default' : 'secondary'}>
-                      {project.status === 'ativo' ? 'Ativo' : 'Encerrado'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{project.max_slots || '∞'}</TableCell>
-                  <TableCell>{new Date(project.created_at).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEdit(project)}>
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setSelectedProjectId(project.id)}>
-                      <Users className="h-3 w-3 mr-1" /> Inscritos
-                    </Button>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Vagas</TableHead>
+                  <TableHead>Criado em</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {projects.map((project) => (
+                  <TableRow key={project.id}>
+                    <TableCell className="font-medium">{project.title}</TableCell>
+                    <TableCell>
+                      <Badge variant={project.status === 'ativo' ? 'default' : 'secondary'}>
+                        {project.status === 'ativo' ? 'Ativo' : 'Encerrado'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{project.max_slots || '∞'}</TableCell>
+                    <TableCell>{new Date(project.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => openEdit(project)}>
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedProjectId(project.id)}>
+                        <Users className="h-3 w-3 mr-1" /> Inscritos
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>
