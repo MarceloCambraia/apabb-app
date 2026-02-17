@@ -150,9 +150,9 @@ export default function AdminDashboard() {
 
   if (authLoading || roleLoading || !isAdmin) {
     return (
-      <div className="min-h-screen bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="min-h-screen bg-muted/30 flex flex-col">
         <Header />
-        <div className="container mx-auto px-4 md:px-6 py-6 md:py-12">
+        <div className="container mx-auto px-4 md:px-6 py-6 md:py-12 flex-1">
           <Skeleton className="h-12 w-64 mb-8" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
@@ -165,10 +165,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="min-h-screen bg-muted/30 flex flex-col">
       <Header />
       
-      <main className="container mx-auto px-4 md:px-6 py-6 md:py-12">
+      <main className="container mx-auto px-4 md:px-6 py-6 md:py-12 flex-1">
         <div className="mb-6 md:mb-8">
           <h1 className="text-2xl md:text-4xl font-bold mb-2">Dashboard Administrativo</h1>
           <p className="text-muted-foreground text-sm md:text-lg">
@@ -229,8 +229,8 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs defaultValue="donations" className="w-full">
-          <div className="overflow-x-auto whitespace-nowrap scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-            <TabsList className="inline-flex w-auto min-w-full md:min-w-0">
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="w-full flex flex-row overflow-x-auto flex-nowrap justify-start scrollbar-hide">
               <TabsTrigger value="donations">Doações</TabsTrigger>
               <TabsTrigger value="associates">Associados</TabsTrigger>
               <TabsTrigger value="volunteers">Voluntários</TabsTrigger>
@@ -255,40 +255,42 @@ export default function AdminDashboard() {
                 ) : donations.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">Nenhuma doação encontrada</p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Doador</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Data</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {donations.map((donation) => (
-                        <TableRow key={donation.id}>
-                          <TableCell>Doador</TableCell>
-                          <TableCell>R$ {Number(donation.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                          <TableCell>
-                            {donation.is_recurring ? (
-                              <Badge variant="default">Recorrente</Badge>
-                            ) : (
-                              <Badge variant="secondary">Única</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={donation.payment_status === 'completed' ? 'default' : 'secondary'}>
-                              {donation.payment_status === 'pending' ? 'Pendente' : 
-                               donation.payment_status === 'completed' ? 'Completo' : 
-                               donation.payment_status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{new Date(donation.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                  <div className="w-full overflow-x-auto">
+                    <Table className="min-w-[500px]">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Doador</TableHead>
+                          <TableHead>Valor</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Data</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {donations.map((donation) => (
+                          <TableRow key={donation.id}>
+                            <TableCell>Doador</TableCell>
+                            <TableCell>R$ {Number(donation.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                            <TableCell>
+                              {donation.is_recurring ? (
+                                <Badge variant="default">Recorrente</Badge>
+                              ) : (
+                                <Badge variant="secondary">Única</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={donation.payment_status === 'completed' ? 'default' : 'secondary'}>
+                                {donation.payment_status === 'pending' ? 'Pendente' : 
+                                 donation.payment_status === 'completed' ? 'Completo' : 
+                                 donation.payment_status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{new Date(donation.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -310,36 +312,38 @@ export default function AdminDashboard() {
                 ) : associates.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">Nenhum associado encontrado</p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Telefone</TableHead>
-                        <TableHead>Vínculo</TableHead>
-                        <TableHead>Data</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {associates.map((associate) => (
-                        <TableRow key={associate.id}>
-                          <TableCell className="font-medium">{associate.name}</TableCell>
-                          <TableCell>{associate.email}</TableCell>
-                          <TableCell>{associate.phone}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {associate.relationship === 'pcd' ? 'PCD' :
-                               associate.relationship === 'pai' ? 'Pai/Mãe' :
-                               associate.relationship === 'familiar' ? 'Familiar' :
-                               associate.relationship === 'bb' ? 'Func. BB' :
-                               'Comunidade'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{new Date(associate.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                  <div className="w-full overflow-x-auto">
+                    <Table className="min-w-[500px]">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Telefone</TableHead>
+                          <TableHead>Vínculo</TableHead>
+                          <TableHead>Data</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {associates.map((associate) => (
+                          <TableRow key={associate.id}>
+                            <TableCell className="font-medium">{associate.name}</TableCell>
+                            <TableCell>{associate.email}</TableCell>
+                            <TableCell>{associate.phone}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {associate.relationship === 'pcd' ? 'PCD' :
+                                 associate.relationship === 'pai' ? 'Pai/Mãe' :
+                                 associate.relationship === 'familiar' ? 'Familiar' :
+                                 associate.relationship === 'bb' ? 'Func. BB' :
+                                 'Comunidade'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{new Date(associate.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -361,30 +365,32 @@ export default function AdminDashboard() {
                 ) : volunteers.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">Nenhum voluntário encontrado</p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Telefone</TableHead>
-                        <TableHead>Área de Interesse</TableHead>
-                        <TableHead>Data</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {volunteers.map((volunteer) => (
-                        <TableRow key={volunteer.id}>
-                          <TableCell className="font-medium">{volunteer.name}</TableCell>
-                          <TableCell>{volunteer.email}</TableCell>
-                          <TableCell>{volunteer.phone}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{volunteer.interest_area}</Badge>
-                          </TableCell>
-                          <TableCell>{new Date(volunteer.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                  <div className="w-full overflow-x-auto">
+                    <Table className="min-w-[500px]">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Telefone</TableHead>
+                          <TableHead>Área de Interesse</TableHead>
+                          <TableHead>Data</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {volunteers.map((volunteer) => (
+                          <TableRow key={volunteer.id}>
+                            <TableCell className="font-medium">{volunteer.name}</TableCell>
+                            <TableCell>{volunteer.email}</TableCell>
+                            <TableCell>{volunteer.phone}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{volunteer.interest_area}</Badge>
+                            </TableCell>
+                            <TableCell>{new Date(volunteer.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
