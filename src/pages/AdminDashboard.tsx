@@ -150,9 +150,9 @@ export default function AdminDashboard() {
 
   if (authLoading || roleLoading || !isAdmin) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
         <Header />
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 md:px-6 py-6 md:py-12">
           <Skeleton className="h-12 w-64 mb-8" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
@@ -165,19 +165,19 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <Header />
       
-      <main className="container mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Dashboard Administrativo</h1>
-          <p className="text-muted-foreground text-lg">
+      <main className="container mx-auto px-4 md:px-6 py-6 md:py-12">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-4xl font-bold mb-2">Dashboard Administrativo</h1>
+          <p className="text-muted-foreground text-sm md:text-lg">
             {nucleus && nucleusNames[nucleus]}
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Total Doações</CardTitle>
@@ -229,13 +229,15 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs defaultValue="donations" className="w-full">
-          <TabsList>
-            <TabsTrigger value="donations">Doações</TabsTrigger>
-            <TabsTrigger value="associates">Associados</TabsTrigger>
-            <TabsTrigger value="volunteers">Voluntários</TabsTrigger>
-            <TabsTrigger value="projects">Projetos</TabsTrigger>
-            <TabsTrigger value="volunteer-opportunities">Voluntariado</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto whitespace-nowrap scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            <TabsList className="inline-flex w-auto min-w-full md:min-w-0">
+              <TabsTrigger value="donations">Doações</TabsTrigger>
+              <TabsTrigger value="associates">Associados</TabsTrigger>
+              <TabsTrigger value="volunteers">Voluntários</TabsTrigger>
+              <TabsTrigger value="projects">Projetos</TabsTrigger>
+              <TabsTrigger value="volunteer-opportunities">Voluntariado</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="donations" className="mt-6">
             <Card>

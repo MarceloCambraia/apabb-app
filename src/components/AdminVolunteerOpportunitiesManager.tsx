@@ -206,14 +206,14 @@ export function AdminVolunteerOpportunitiesManager({ nucleus }: AdminVolunteerOp
   // View: opportunities list
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <CardTitle>Oportunidades de Voluntariado</CardTitle>
+          <CardTitle className="text-xl md:text-2xl">Oportunidades de Voluntariado</CardTitle>
           <CardDescription>Gerencie as oportunidades do núcleo {nucleusNames[nucleus] || nucleus}</CardDescription>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Nova Oportunidade</Button>
+            <Button className="w-full md:w-auto"><Plus className="h-4 w-4 mr-2" />Nova Oportunidade</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -265,41 +265,43 @@ export function AdminVolunteerOpportunitiesManager({ nucleus }: AdminVolunteerOp
         ) : !opportunities?.length ? (
           <p className="text-center text-muted-foreground py-8">Nenhuma oportunidade cadastrada</p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Título</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Carga Horária</TableHead>
-                <TableHead>Vagas</TableHead>
-                <TableHead>Criado em</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {opportunities.map((opp) => (
-                <TableRow key={opp.id}>
-                  <TableCell className="font-medium">{opp.title}</TableCell>
-                  <TableCell>
-                    <Badge variant={opp.status === 'ativo' ? 'default' : 'secondary'}>
-                      {opp.status === 'ativo' ? 'Ativo' : 'Encerrado'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{opp.time_commitment || '-'}</TableCell>
-                  <TableCell>{opp.max_slots || '∞'}</TableCell>
-                  <TableCell>{new Date(opp.created_at).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEdit(opp)}>
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setSelectedOpportunityId(opp.id)}>
-                      <Users className="h-3 w-3 mr-1" /> Inscritos
-                    </Button>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Carga Horária</TableHead>
+                  <TableHead>Vagas</TableHead>
+                  <TableHead>Criado em</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {opportunities.map((opp) => (
+                  <TableRow key={opp.id}>
+                    <TableCell className="font-medium">{opp.title}</TableCell>
+                    <TableCell>
+                      <Badge variant={opp.status === 'ativo' ? 'default' : 'secondary'}>
+                        {opp.status === 'ativo' ? 'Ativo' : 'Encerrado'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{opp.time_commitment || '-'}</TableCell>
+                    <TableCell>{opp.max_slots || '∞'}</TableCell>
+                    <TableCell>{new Date(opp.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => openEdit(opp)}>
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedOpportunityId(opp.id)}>
+                        <Users className="h-3 w-3 mr-1" /> Inscritos
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>
