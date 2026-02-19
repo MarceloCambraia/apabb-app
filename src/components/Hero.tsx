@@ -53,7 +53,7 @@ export function Hero() {
   }, [nextSlide]);
 
   return (
-    <section id="inicio" className="relative min-h-[40vh] md:min-h-[80vh] flex items-center justify-center overflow-hidden">
+    <section id="inicio" className="relative min-h-[55vh] md:min-h-[80vh] flex items-end md:items-center justify-center overflow-hidden">
       {/* Background Images Carousel */}
       <div className="absolute inset-0">
         {heroImages.map((image, index) => (
@@ -66,7 +66,9 @@ export function Hero() {
             aria-hidden={index !== currentSlide}
           />
         ))}
-        <div className="absolute inset-0 gradient-hero opacity-80"></div>
+        {/* Strong overlay for mobile legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent md:hidden"></div>
+        <div className="absolute inset-0 gradient-hero opacity-80 hidden md:block"></div>
       </div>
 
       {/* Navigation Arrows */}
@@ -103,7 +105,7 @@ export function Hero() {
       </div>
       
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 text-center text-white">
+      <div className="relative z-10 container mx-auto px-4 text-center text-white w-full pb-12 md:pb-0 md:py-16">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl md:text-6xl font-bold mb-4 md:mb-6 leading-tight">
             Transforme vidas com sua
@@ -114,7 +116,7 @@ export function Hero() {
             Há 38 anos promovendo inclusão e dignidade para pessoas com deficiência em 15 capitais brasileiras
           </p>
           
-          <div className="flex flex-col md:flex-row gap-3 justify-center mb-8 w-full px-2 md:px-0">
+          <div className="flex flex-col md:flex-row gap-y-3 md:gap-3 justify-center mb-6 md:mb-8 w-full px-2 md:px-0">
             <Button variant="outline" size="xl" className="w-full md:w-auto text-lg border-primary text-primary hover:bg-white hover:scale-105 transition-bounce shadow-medium" asChild>
               <Link to="/doar">
                 <Heart className="w-5 h-5" />
