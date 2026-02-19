@@ -26,7 +26,7 @@ export function BottomNav() {
   const items = user ? navItems : guestNavItems;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden"
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-background border-t border-border md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="flex items-stretch justify-around">

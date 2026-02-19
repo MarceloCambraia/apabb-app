@@ -56,8 +56,8 @@ export function Header() {
         </nav>
         
         <div className="flex items-center gap-2">
-          <Link to="/doar">
-            <Button variant="yellow" size="sm" className="hidden sm:flex">
+          <Link to="/doar" className="hidden md:flex">
+            <Button variant="yellow" size="sm">
               <Heart className="w-4 h-4" />
               Doar
             </Button>

@@ -114,14 +114,14 @@ export function Hero() {
             Há 38 anos promovendo inclusão e dignidade para pessoas com deficiência em 15 capitais brasileiras
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button variant="outline" size="xl" className="text-lg border-primary text-primary hover:bg-white hover:scale-105 transition-bounce shadow-medium" asChild>
+          <div className="flex flex-col md:flex-row gap-3 justify-center mb-8 w-full px-2 md:px-0">
+            <Button variant="outline" size="xl" className="w-full md:w-auto text-lg border-primary text-primary hover:bg-white hover:scale-105 transition-bounce shadow-medium" asChild>
               <Link to="/doar">
                 <Heart className="w-5 h-5" />
                 Começar a Doar
               </Link>
             </Button>
-            <Button variant="hero" size="xl" className="text-lg">
+            <Button variant="hero" size="xl" className="w-full md:w-auto text-lg">
               <Users className="w-5 h-5" />
               Saiba Mais
             </Button>
