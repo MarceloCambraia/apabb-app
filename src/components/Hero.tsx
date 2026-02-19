@@ -59,7 +59,7 @@ export function Hero() {
         {heroImages.map((image, index) => (
           <div
             key={index}
-            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out ${
+            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-in-out saturate-50 md:saturate-100 ${
               index === currentSlide ? "opacity-100" : "opacity-0"
             }`}
             style={{ backgroundImage: `url(${image.src})` }}
@@ -67,7 +67,7 @@ export function Hero() {
           />
         ))}
         {/* Strong overlay for mobile legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent md:hidden"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/30 md:hidden"></div>
         <div className="absolute inset-0 gradient-hero opacity-80 hidden md:block"></div>
       </div>
 
@@ -117,7 +117,7 @@ export function Hero() {
           </p>
           
           <div className="flex flex-col md:flex-row gap-y-3 md:gap-3 justify-center mb-6 md:mb-8 w-full px-2 md:px-0">
-            <Button variant="outline" size="xl" className="w-full md:w-auto text-lg border-primary text-primary hover:bg-white hover:scale-105 transition-bounce shadow-medium" asChild>
+            <Button variant="yellow" size="xl" className="w-full md:w-auto text-lg hover:scale-105 transition-bounce shadow-medium" asChild>
               <Link to="/doar">
                 <Heart className="w-5 h-5" />
                 Começar a Doar
