@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BottomNav } from '@/components/BottomNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -194,8 +195,8 @@ export default function Profile() {
   const allDonations = donations;
 
   return (
-    <div className="min-h-screen bg-background py-12">
-      <div className="container mx-auto px-4 max-w-4xl">
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="container mx-auto px-4 max-w-4xl py-12 pb-28 md:pb-12 flex-1">
         <h1 className="text-4xl font-bold text-foreground mb-8">Meu Perfil</h1>
 
         <Tabs defaultValue="profile" className="w-full">
@@ -376,6 +377,7 @@ export default function Profile() {
           </TabsContent>
         </Tabs>
       </div>
+      <BottomNav />
     </div>
   );
 }

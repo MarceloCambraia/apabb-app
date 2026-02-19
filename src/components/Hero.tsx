@@ -53,7 +53,7 @@ export function Hero() {
   }, [nextSlide]);
 
   return (
-    <section id="inicio" className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+    <section id="inicio" className="relative min-h-[40vh] md:min-h-[80vh] flex items-center justify-center overflow-hidden">
       {/* Background Images Carousel */}
       <div className="absolute inset-0">
         {heroImages.map((image, index) => (
@@ -105,12 +105,12 @@ export function Hero() {
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center text-white">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+          <h1 className="text-2xl md:text-6xl font-bold mb-4 md:mb-6 leading-tight">
             Transforme vidas com sua
             <span className="block text-secondary drop-shadow-lg">doação recorrente</span>
           </h1>
           
-          <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm md:text-2xl mb-5 md:mb-8 text-white/90 max-w-2xl mx-auto leading-relaxed">
             Há 38 anos promovendo inclusão e dignidade para pessoas com deficiência em 15 capitais brasileiras
           </p>
           
