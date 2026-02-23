@@ -7,9 +7,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { 
-  Heart, CreditCard, Building2, FileText, Wallet, 
-  User, Mail, Phone, MapPin, Calendar, Loader2, CheckCircle2, AlertCircle
+  Heart, CreditCard, Building2, FileText, Wallet, QrCode,
+  User, Mail, Phone, MapPin, Calendar, Loader2, CheckCircle2, AlertCircle, Copy, Check
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { 
   useDonation, 
   formatCurrency, 
@@ -28,6 +31,7 @@ const donationAmounts = [
 ];
 
 const paymentMethods = [
+  { value: "pix", label: "PIX", icon: QrCode, description: "Pagamento instantâneo" },
   { value: "debit_bb", label: "Débito em Conta BB", icon: Building2, description: "Banco do Brasil" },
   { value: "credit_card", label: "Cartão de Crédito", icon: CreditCard, description: "Visa, Master, Elo" },
   { value: "boleto", label: "Boleto Bancário", icon: FileText, description: "Vencimento em 3 dias" },
@@ -66,6 +70,17 @@ export function DonationSection() {
 
   const [customAmount, setCustomAmount] = useState("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // PIX state
+  const [pixLoading, setPixLoading] = useState(false);
+  const [pixData, setPixData] = useState<{
+    qr_code_base64: string;
+    qr_code: string;
+    mp_transaction_id: string;
+  } | null>(null);
+  const [pixCopied, setPixCopied] = useState(false);
 
   // Atualiza o valor quando digita valor customizado
   useEffect(() => {
@@ -77,9 +92,125 @@ export function DonationSection() {
     }
   }, [customAmount, useCustomAmount, setAmount]);
 
+  const handlePixDonation = async () => {
+    setPixLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-pix-payment", {
+        body: {
+          amount: selectedAmount,
+          email: formData.email || user?.email || "doador@apabb.org.br",
+          userId: user?.id,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Erro ao gerar PIX");
+
+      setPixData({
+        qr_code_base64: data.qr_code_base64,
+        qr_code: data.qr_code,
+        mp_transaction_id: data.mp_transaction_id,
+      });
+    } catch (err: any) {
+      toast({
+        title: "Erro ao gerar PIX",
+        description: err.message || "Tente novamente",
+        variant: "destructive",
+      });
+    } finally {
+      setPixLoading(false);
+    }
+  };
+
+  const handleCopyPix = async () => {
+    if (pixData?.qr_code) {
+      await navigator.clipboard.writeText(pixData.qr_code);
+      setPixCopied(true);
+      toast({ title: "Código PIX copiado!" });
+      setTimeout(() => setPixCopied(false), 3000);
+    }
+  };
+
   const handleCepBlur = (cep: string) => {
     fetchAddressByCep(cep);
   };
+
+  // Show PIX QR Code result
+  if (pixData) {
+    return (
+      <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto shadow-strong">
+            <CardContent className="pt-8 pb-8 space-y-6">
+              <div className="text-center space-y-2">
+                <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center">
+                  <QrCode className="w-8 h-8 text-green-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-foreground">PIX Gerado!</h2>
+                <p className="text-muted-foreground">
+                  Escaneie o QR Code ou copie o código para pagar{" "}
+                  <strong>{selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                </p>
+              </div>
+
+              {/* QR Code Image */}
+              {pixData.qr_code_base64 && (
+                <div className="flex justify-center">
+                  <img
+                    src={`data:image/png;base64,${pixData.qr_code_base64}`}
+                    alt="QR Code PIX"
+                    className="w-64 h-64 rounded-lg border border-border"
+                  />
+                </div>
+              )}
+
+              {/* Copy & Paste Code */}
+              {pixData.qr_code && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Código Copia e Cola</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={pixData.qr_code}
+                      readOnly
+                      className="text-xs font-mono"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleCopyPix}
+                      className="shrink-0"
+                    >
+                      {pixCopied ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-xs text-center text-muted-foreground">
+                ID da transação: {pixData.mp_transaction_id}
+              </p>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setPixData(null);
+                  resetForm();
+                }}
+              >
+                Fazer Nova Doação
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
 
   if (step === "success") {
     return (
@@ -588,13 +719,13 @@ export function DonationSection() {
               <Button
                 size="lg"
                 className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground text-lg py-6"
-                onClick={submitDonation}
-                disabled={isSubmitting || !paymentMethod}
+                onClick={paymentMethod === "pix" ? handlePixDonation : submitDonation}
+                disabled={(isSubmitting || pixLoading) || !paymentMethod}
               >
-                {isSubmitting ? (
+                {(isSubmitting || pixLoading) ? (
                   <>
                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Processando...
+                    {pixLoading ? "Gerando PIX..." : "Processando..."}
                   </>
                 ) : (
                   <>
