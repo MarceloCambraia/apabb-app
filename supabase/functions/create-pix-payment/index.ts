@@ -87,7 +87,7 @@ serve(async (req) => {
       hasQrCode: !!qrCodeBase64,
     });
 
-    // Save donation to database
+    // Save donation to database with transaction_id for webhook matching
     if (userId) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -100,11 +100,11 @@ serve(async (req) => {
         nucleus: "Nacional",
         payment_method: "pix",
         payment_status: "pending",
+        transaction_id: mpTransactionId,
       });
 
       if (dbError) {
         console.error("DB insert error:", dbError.message);
-        // Don't fail the request - PIX was already generated
       }
     }
 
