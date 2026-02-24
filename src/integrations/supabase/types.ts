@@ -86,6 +86,7 @@ export type Database = {
           nucleus: string
           payment_method: string | null
           payment_status: string
+          transaction_id: string | null
           updated_at: string
           user_id: string
         }
@@ -97,6 +98,7 @@ export type Database = {
           nucleus: string
           payment_method?: string | null
           payment_status?: string
+          transaction_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -108,6 +110,7 @@ export type Database = {
           nucleus?: string
           payment_method?: string | null
           payment_status?: string
+          transaction_id?: string | null
           updated_at?: string
           user_id?: string
         }

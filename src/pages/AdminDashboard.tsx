@@ -95,6 +95,45 @@ export default function AdminDashboard() {
     }
   }, [isAdmin, nucleus]);
 
+  // Realtime subscription for donations
+  useEffect(() => {
+    if (!isAdmin || !nucleus) return;
+
+    const channel = supabase
+      .channel('donations-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'donations', filter: `nucleus=eq.${nucleus}` },
+        (payload) => {
+          console.log('Realtime donation update:', payload);
+
+          if (payload.eventType === 'INSERT') {
+            const newDonation = payload.new as Donation;
+            setDonations((prev) => [newDonation, ...prev]);
+            setStats((prev) => ({
+              ...prev,
+              totalDonations: prev.totalDonations + 1,
+              totalAmount: prev.totalAmount + Number(newDonation.amount),
+            }));
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as Donation;
+            setDonations((prev) =>
+              prev.map((d) => (d.id === updated.id ? updated : d))
+            );
+            // Recalculate total if status changed to paid
+            if (payload.old && (payload.old as Donation).payment_status !== updated.payment_status) {
+              setStats((prev) => ({ ...prev })); // trigger re-render; amount stays same
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin, nucleus]);
+
   const fetchDashboardData = async () => {
     if (!nucleus) return;
 
@@ -279,9 +318,11 @@ export default function AdminDashboard() {
                               )}
                             </TableCell>
                             <TableCell>
-                              <Badge variant={donation.payment_status === 'completed' ? 'default' : 'secondary'}>
+                              <Badge variant={donation.payment_status === 'paid' || donation.payment_status === 'completed' ? 'default' : donation.payment_status === 'failed' ? 'destructive' : 'secondary'}>
                                 {donation.payment_status === 'pending' ? 'Pendente' : 
+                                 donation.payment_status === 'paid' ? 'Pago' :
                                  donation.payment_status === 'completed' ? 'Completo' : 
+                                 donation.payment_status === 'failed' ? 'Falhou' :
                                  donation.payment_status}
                               </Badge>
                             </TableCell>
