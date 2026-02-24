@@ -120,6 +120,9 @@ export function DonationSection() {
           amount: selectedAmount,
           email: formData.email || user?.email || "doador@apabb.org.br",
           userId: user?.id,
+          donorName: formData.fullName,
+          cpf: formData.cpfCnpj,
+          description: `Doação APABB - ${formData.fullName || "Doador"}`,
         },
       });
       if (error) throw error;
@@ -176,11 +179,11 @@ export function DonationSection() {
                 <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center">
                   <QrCode className="w-8 h-8 text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-foreground">PIX Gerado!</h2>
-                <p className="text-muted-foreground">
-                  Escaneie o QR Code ou copie o código para pagar{" "}
-                  <strong>{selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
-                </p>
+                 <h2 className="text-2xl font-bold text-foreground">Falta pouco!</h2>
+                 <p className="text-muted-foreground">
+                   Escaneie o QR Code ou copie o código para pagar{" "}
+                   <strong>{selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                 </p>
               </div>
               {pixData.qr_code_base64 && (
                 <div className="flex justify-center">
@@ -199,7 +202,8 @@ export function DonationSection() {
                 </div>
               )}
               <p className="text-xs text-center text-muted-foreground">ID da transação: {pixData.mp_transaction_id}</p>
-              <Button variant="outline" className="w-full" onClick={handleFullReset}>Fazer Nova Doação</Button>
+              <Button variant="outline" className="w-full" onClick={() => window.location.href = "/"}>Voltar ao Início</Button>
+              <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>Fazer Nova Doação</Button>
             </CardContent>
           </Card>
         </div>
