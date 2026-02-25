@@ -85,6 +85,30 @@ export function DonationSection() {
     mp_transaction_id: string;
   } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
+
+  // Realtime listener for PIX payment confirmation
+  useEffect(() => {
+    if (!pixData?.mp_transaction_id) return;
+
+    const channel = supabase
+      .channel('pix-payment-status')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'donations',
+        filter: `transaction_id=eq.${pixData.mp_transaction_id}`,
+      }, (payload) => {
+        if (payload.new && (payload.new as any).payment_status === 'paid') {
+          setIsPaid(true);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pixData?.mp_transaction_id]);
 
   useEffect(() => {
     if (useCustomAmount && customAmount) {
@@ -169,6 +193,38 @@ export function DonationSection() {
   const isFinalPixStep = isPix && wizardStep === 3;
 
   // --- Result screens ---
+  if (pixData && isPaid) {
+    return (
+      <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto shadow-strong">
+            <CardContent className="pt-12 pb-8 space-y-6 text-center">
+              <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center animate-in zoom-in duration-500">
+                <CheckCircle2 className="w-14 h-14 text-primary" />
+              </div>
+              <h2 className="text-3xl font-bold text-foreground">Pagamento Confirmado!</h2>
+              <p className="text-lg text-muted-foreground max-w-sm mx-auto">
+                Muito obrigado pela sua doação de{" "}
+                <strong className="text-foreground">
+                  {selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </strong>
+                . Sua contribuição faz a diferença!
+              </p>
+              <div className="pt-4 space-y-3">
+                <Button className="w-full" size="lg" onClick={() => window.location.href = "/"}>
+                  Voltar ao Início
+                </Button>
+                <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>
+                  Fazer Nova Doação
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
   if (pixData) {
     return (
       <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
@@ -176,8 +232,8 @@ export function DonationSection() {
           <Card className="max-w-lg mx-auto shadow-strong">
             <CardContent className="pt-8 pb-8 space-y-6">
               <div className="text-center space-y-2">
-                <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center">
-                  <QrCode className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                  <QrCode className="w-8 h-8 text-primary" />
                 </div>
                  <h2 className="text-2xl font-bold text-foreground">Falta pouco!</h2>
                  <p className="text-muted-foreground">
@@ -196,11 +252,15 @@ export function DonationSection() {
                   <div className="flex gap-2">
                     <Input value={pixData.qr_code} readOnly className="text-xs font-mono" onClick={(e) => (e.target as HTMLInputElement).select()} />
                     <Button variant="outline" size="icon" onClick={handleCopyPix} className="shrink-0">
-                      {pixCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                      {pixCopied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
                     </Button>
                   </div>
                 </div>
               )}
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Aguardando confirmação do pagamento...</span>
+              </div>
               <p className="text-xs text-center text-muted-foreground">ID da transação: {pixData.mp_transaction_id}</p>
               <Button variant="outline" className="w-full" onClick={() => window.location.href = "/"}>Voltar ao Início</Button>
               <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>Fazer Nova Doação</Button>
