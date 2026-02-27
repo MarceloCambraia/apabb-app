@@ -9,10 +9,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Users, Heart, HandHeart, DollarSign, TrendingUp, Calendar, FolderKanban } from 'lucide-react';
+import { Users, Heart, HandHeart, DollarSign, TrendingUp, Calendar, FolderKanban, Filter } from 'lucide-react';
 import { AdminProjectsManager } from '@/components/AdminProjectsManager';
 import { AdminVolunteerOpportunitiesManager } from '@/components/AdminVolunteerOpportunitiesManager';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const monthOptions = [
+  { value: 'all', label: 'Todos os meses' },
+  { value: '1', label: 'Janeiro' },
+  { value: '2', label: 'Fevereiro' },
+  { value: '3', label: 'Março' },
+  { value: '4', label: 'Abril' },
+  { value: '5', label: 'Maio' },
+  { value: '6', label: 'Junho' },
+  { value: '7', label: 'Julho' },
+  { value: '8', label: 'Agosto' },
+  { value: '9', label: 'Setembro' },
+  { value: '10', label: 'Outubro' },
+  { value: '11', label: 'Novembro' },
+  { value: '12', label: 'Dezembro' },
+];
+
+const currentYear = new Date().getFullYear();
+const yearOptions = [
+  { value: 'all', label: 'Todos os anos' },
+  ...Array.from({ length: 3 }, (_, i) => ({
+    value: String(currentYear - i),
+    label: String(currentYear - i),
+  })),
+];
 
 interface Stats {
   totalDonations: number;
@@ -80,6 +106,8 @@ export default function AdminDashboard() {
   const [associates, setAssociates] = useState<Associate[]>([]);
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [selectedYear, setSelectedYear] = useState('all');
 
   useEffect(() => {
     if (!authLoading && !roleLoading) {
@@ -93,7 +121,7 @@ export default function AdminDashboard() {
     if (isAdmin && nucleus) {
       fetchDashboardData();
     }
-  }, [isAdmin, nucleus]);
+  }, [isAdmin, nucleus, selectedMonth, selectedYear]);
 
   // Realtime subscription for donations
   useEffect(() => {
@@ -109,14 +137,17 @@ export default function AdminDashboard() {
 
           if (payload.eventType === 'INSERT') {
             const newDonation = payload.new as Donation;
-            setDonations((prev) => [newDonation, ...prev]);
-            setStats((prev) => ({
-              ...prev,
-              totalDonations: prev.totalDonations + 1,
-              totalAmount: newDonation.payment_status === 'paid'
-                ? prev.totalAmount + Number(newDonation.amount)
-                : prev.totalAmount,
-            }));
+            const inRange = isDonationInDateRange(newDonation.created_at);
+            if (inRange) {
+              setDonations((prev) => [newDonation, ...prev]);
+              setStats((prev) => ({
+                ...prev,
+                totalDonations: prev.totalDonations + 1,
+                totalAmount: newDonation.payment_status === 'paid'
+                  ? prev.totalAmount + Number(newDonation.amount)
+                  : prev.totalAmount,
+              }));
+            }
           } else if (payload.eventType === 'UPDATE') {
             const updated = payload.new as Donation;
             const old = payload.old as Partial<Donation>;
@@ -145,20 +176,56 @@ export default function AdminDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isAdmin, nucleus]);
+  }, [isAdmin, nucleus, selectedMonth, selectedYear]);
+
+  const getDateRange = () => {
+    if (selectedMonth === 'all' && selectedYear === 'all') return null;
+    const year = selectedYear !== 'all' ? parseInt(selectedYear) : null;
+    const month = selectedMonth !== 'all' ? parseInt(selectedMonth) : null;
+
+    if (year && month) {
+      const start = new Date(year, month - 1, 1).toISOString();
+      const end = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
+      return { start, end };
+    } else if (year) {
+      const start = new Date(year, 0, 1).toISOString();
+      const end = new Date(year, 11, 31, 23, 59, 59, 999).toISOString();
+      return { start, end };
+    } else if (month) {
+      const year = currentYear;
+      const start = new Date(year, month - 1, 1).toISOString();
+      const end = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
+      return { start, end };
+    }
+    return null;
+  };
+
+  const isDonationInDateRange = (createdAt: string) => {
+    const range = getDateRange();
+    if (!range) return true;
+    const date = new Date(createdAt);
+    return date >= new Date(range.start) && date <= new Date(range.end);
+  };
 
   const fetchDashboardData = async () => {
     if (!nucleus) return;
 
     try {
       setLoading(true);
+      const dateRange = getDateRange();
 
       // Fetch donations
-      const { data: donationsData, error: donationsError } = await supabase
+      let donationsQuery = supabase
         .from('donations')
         .select('*')
         .eq('nucleus', nucleus)
         .order('created_at', { ascending: false });
+
+      if (dateRange) {
+        donationsQuery = donationsQuery.gte('created_at', dateRange.start).lte('created_at', dateRange.end);
+      }
+
+      const { data: donationsData, error: donationsError } = await donationsQuery;
 
       if (donationsError) throw donationsError;
 
@@ -228,6 +295,31 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground text-sm md:text-lg">
             {nucleus && nucleusNames[nucleus]}
           </p>
+        </div>
+
+        {/* Date Filters */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Mês" />
+            </SelectTrigger>
+            <SelectContent>
+              {monthOptions.map((m) => (
+                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Ano" />
+            </SelectTrigger>
+            <SelectContent>
+              {yearOptions.map((y) => (
+                <SelectItem key={y.value} value={y.value}>{y.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Stats Cards */}
