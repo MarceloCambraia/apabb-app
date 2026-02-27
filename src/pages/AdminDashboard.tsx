@@ -113,16 +113,29 @@ export default function AdminDashboard() {
             setStats((prev) => ({
               ...prev,
               totalDonations: prev.totalDonations + 1,
-              totalAmount: prev.totalAmount + Number(newDonation.amount),
+              totalAmount: newDonation.payment_status === 'paid'
+                ? prev.totalAmount + Number(newDonation.amount)
+                : prev.totalAmount,
             }));
           } else if (payload.eventType === 'UPDATE') {
             const updated = payload.new as Donation;
+            const old = payload.old as Partial<Donation>;
             setDonations((prev) =>
               prev.map((d) => (d.id === updated.id ? updated : d))
             );
-            // Recalculate total if status changed to paid
-            if (payload.old && (payload.old as Donation).payment_status !== updated.payment_status) {
-              setStats((prev) => ({ ...prev })); // trigger re-render; amount stays same
+            // Recalculate totalAmount when status changes
+            const wasPaid = old.payment_status === 'paid';
+            const nowPaid = updated.payment_status === 'paid';
+            if (!wasPaid && nowPaid) {
+              setStats((prev) => ({
+                ...prev,
+                totalAmount: prev.totalAmount + Number(updated.amount),
+              }));
+            } else if (wasPaid && !nowPaid) {
+              setStats((prev) => ({
+                ...prev,
+                totalAmount: prev.totalAmount - Number(updated.amount),
+              }));
             }
           }
         }
@@ -167,8 +180,10 @@ export default function AdminDashboard() {
 
       if (volunteersError) throw volunteersError;
 
-      // Calculate stats
-      const totalAmount = donationsData?.reduce((sum, d) => sum + Number(d.amount), 0) || 0;
+      // Calculate stats — Receita Total only counts 'paid' donations
+      const totalAmount = donationsData
+        ?.filter((d) => d.payment_status === 'paid')
+        .reduce((sum, d) => sum + Number(d.amount), 0) || 0;
 
       setStats({
         totalDonations: donationsData?.length || 0,
