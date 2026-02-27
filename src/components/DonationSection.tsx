@@ -24,6 +24,25 @@ import {
 } from "@/hooks/useDonation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+const nucleusOptions = [
+  { value: "nacional", label: "Nacional" },
+  { value: "df", label: "Brasília - DF" },
+  { value: "sp", label: "São Paulo - SP" },
+  { value: "rj", label: "Rio de Janeiro - RJ" },
+  { value: "mg", label: "Belo Horizonte - MG" },
+  { value: "rs", label: "Porto Alegre - RS" },
+  { value: "ba", label: "Salvador - BA" },
+  { value: "pr", label: "Curitiba - PR" },
+  { value: "ce", label: "Fortaleza - CE" },
+  { value: "pe", label: "Recife - PE" },
+  { value: "go", label: "Goiânia - GO" },
+  { value: "pa", label: "Belém - PA" },
+  { value: "sc", label: "Florianópolis - SC" },
+  { value: "es", label: "Vitória - ES" },
+  { value: "rn", label: "Natal - RN" },
+  { value: "se", label: "Aracaju - SE" },
+];
+
 const donationAmounts = [
   { value: 25, label: "R$ 25", tier: "Apoiador" },
   { value: 40, label: "R$ 40", tier: "Parceiro" },
@@ -73,6 +92,7 @@ export function DonationSection() {
 
   const [customAmount, setCustomAmount] = useState("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
+  const [selectedNucleus, setSelectedNucleus] = useState("");
   const [wizardStep, setWizardStep] = useState(1);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -121,7 +141,7 @@ export function DonationSection() {
   const totalSteps = isPix ? 3 : 4;
   const progressPercent = (wizardStep / totalSteps) * 100;
 
-  const isStep1Valid = selectedAmount > 0;
+  const isStep1Valid = selectedAmount > 0 && !!selectedNucleus;
   const isStep2Valid = !!paymentMethod;
   const isStep3Valid = !!(formData.fullName && formData.cpfCnpj && formData.email && formData.phone && formData.birthDate && formData.gender);
   const isStep4Valid = !!(formData.cep && formData.address && formData.number && formData.neighborhood && formData.city && formData.state);
@@ -147,6 +167,7 @@ export function DonationSection() {
           donorName: formData.fullName,
           cpf: formData.cpfCnpj,
           description: `Doação APABB - ${formData.fullName || "Doador"}`,
+          nucleus: selectedNucleus,
         },
       });
       if (error) throw error;
@@ -389,6 +410,20 @@ export function DonationSection() {
                   <input type="checkbox" id="customAmount" checked={useCustomAmount} onChange={(e) => setUseCustomAmount(e.target.checked)} className="w-4 h-4 rounded border-primary text-primary" />
                   <Label htmlFor="customAmount" className="text-sm">Outro valor:</Label>
                   <Input type="text" placeholder="R$ 0,00" value={customAmount} onChange={(e) => setCustomAmount(formatCurrency(e.target.value))} disabled={!useCustomAmount} className="max-w-[150px]" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Destino da Doação (Núcleo) *</Label>
+                  <Select value={selectedNucleus} onValueChange={setSelectedNucleus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o núcleo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {nucleusOptions.map((n) => (
+                        <SelectItem key={n.value} value={n.value}>{n.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">

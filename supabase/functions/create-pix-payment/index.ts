@@ -26,7 +26,7 @@ serve(async (req) => {
       );
     }
 
-    const { amount, email, userId, description } = await req.json();
+    const { amount, email, userId, description, nucleus } = await req.json();
 
     // Validate
     if (!amount || amount < 1) {
@@ -97,7 +97,7 @@ serve(async (req) => {
         user_id: userId,
         amount: Number(amount),
         is_recurring: false,
-        nucleus: "Nacional",
+        nucleus: nucleus || "nacional",
         payment_method: "pix",
         payment_status: "pending",
         transaction_id: mpTransactionId,
