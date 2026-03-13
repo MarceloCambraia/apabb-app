@@ -547,9 +547,6 @@ export default function AdminDashboard() {
             {nucleus && <AdminProjectsManager nucleus={nucleus} />}
           </TabsContent>
 
-          <TabsContent value="volunteer-opportunities" className="mt-6">
-            {nucleus && <AdminVolunteerOpportunitiesManager nucleus={nucleus} />}
-          </TabsContent>
         </Tabs>
       </main>
 
