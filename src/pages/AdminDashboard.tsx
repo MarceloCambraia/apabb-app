@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Users, Heart, HandHeart, DollarSign, TrendingUp, Calendar, FolderKanban, Filter } from 'lucide-react';
 import { AdminProjectsManager } from '@/components/AdminProjectsManager';
-import { AdminVolunteerOpportunitiesManager } from '@/components/AdminVolunteerOpportunitiesManager';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -381,7 +381,6 @@ export default function AdminDashboard() {
               <TabsTrigger value="associates">Associados</TabsTrigger>
               <TabsTrigger value="volunteers">Voluntários</TabsTrigger>
               <TabsTrigger value="projects">Projetos</TabsTrigger>
-              <TabsTrigger value="volunteer-opportunities">Voluntariado</TabsTrigger>
             </TabsList>
           </div>
 
@@ -548,9 +547,6 @@ export default function AdminDashboard() {
             {nucleus && <AdminProjectsManager nucleus={nucleus} />}
           </TabsContent>
 
-          <TabsContent value="volunteer-opportunities" className="mt-6">
-            {nucleus && <AdminVolunteerOpportunitiesManager nucleus={nucleus} />}
-          </TabsContent>
         </Tabs>
       </main>
 
