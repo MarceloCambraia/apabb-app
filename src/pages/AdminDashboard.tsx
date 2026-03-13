@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Users, Heart, HandHeart, DollarSign, TrendingUp, Calendar, FolderKanban, Filter } from 'lucide-react';
 import { AdminProjectsManager } from '@/components/AdminProjectsManager';
-import { AdminVolunteerOpportunitiesManager } from '@/components/AdminVolunteerOpportunitiesManager';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
