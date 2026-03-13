@@ -381,7 +381,6 @@ export default function AdminDashboard() {
               <TabsTrigger value="associates">Associados</TabsTrigger>
               <TabsTrigger value="volunteers">Voluntários</TabsTrigger>
               <TabsTrigger value="projects">Projetos</TabsTrigger>
-              <TabsTrigger value="volunteer-opportunities">Voluntariado</TabsTrigger>
             </TabsList>
           </div>
 
