@@ -25,7 +25,7 @@ async function getOAuthToken(basicAuth: string): Promise<string> {
       // Use explicit Headers object to prevent charset appending
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: "grant_type=client_credentials&scope=cob.write cob.read pix.read pix.write",
+    body: "grant_type=client_credentials&scope=cob.write cob.read",
   });
 
   if (!response.ok) {
