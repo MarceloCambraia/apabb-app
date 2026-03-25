@@ -159,15 +159,14 @@ export function DonationSection() {
   const handlePixDonation = async () => {
     setPixLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-pix-payment", {
+      const { data, error } = await supabase.functions.invoke("processar-dominio-bb", {
         body: {
-          amount: selectedAmount,
-          email: formData.email || user?.email || "doador@apabb.org.br",
+          valor: selectedAmount,
           userId: user?.id,
-          donorName: formData.fullName,
-          cpf: formData.cpfCnpj,
-          description: `Doação APABB - ${formData.fullName || "Doador"}`,
           nucleus: selectedNucleus,
+          donorName: formData.fullName,
+          email: formData.email || user?.email,
+          cpf: formData.cpfCnpj,
         },
       });
       if (error) throw error;
