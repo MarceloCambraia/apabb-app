@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.processar-dominio-bb]
 verify_jwt = false
+
+[functions.bb-pix-webhook]
+verify_jwt = false

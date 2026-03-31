@@ -9,9 +9,8 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Heart, CreditCard, Building2, FileText, Wallet, QrCode,
   User, Mail, Phone, MapPin, Calendar, Loader2, CheckCircle2, AlertCircle, Copy, Check,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Clock, RefreshCw
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -22,6 +21,7 @@ import {
   formatCep, 
   formatCardNumber 
 } from "@/hooks/useDonation";
+import { usePixPayment } from "@/hooks/usePixPayment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const nucleusOptions = [
@@ -90,45 +90,14 @@ export function DonationSection() {
     resetForm,
   } = useDonation();
 
+  const pix = usePixPayment();
+
   const [customAmount, setCustomAmount] = useState("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
   const [selectedNucleus, setSelectedNucleus] = useState("");
   const [wizardStep, setWizardStep] = useState(1);
   const { user } = useAuth();
   const { toast } = useToast();
-
-  // PIX state
-  const [pixLoading, setPixLoading] = useState(false);
-  const [pixData, setPixData] = useState<{
-    qr_code_base64: string;
-    qr_code: string;
-    mp_transaction_id: string;
-  } | null>(null);
-  const [pixCopied, setPixCopied] = useState(false);
-  const [isPaid, setIsPaid] = useState(false);
-
-  // Realtime listener for PIX payment confirmation
-  useEffect(() => {
-    if (!pixData?.mp_transaction_id) return;
-
-    const channel = supabase
-      .channel('pix-payment-status')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'donations',
-        filter: `transaction_id=eq.${pixData.mp_transaction_id}`,
-      }, (payload) => {
-        if (payload.new && (payload.new as any).payment_status === 'paid') {
-          setIsPaid(true);
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [pixData?.mp_transaction_id]);
 
   useEffect(() => {
     if (useCustomAmount && customAmount) {
@@ -157,63 +126,30 @@ export function DonationSection() {
   };
 
   const handlePixDonation = async () => {
-    setPixLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("processar-dominio-bb", {
-        body: {
-          valor: selectedAmount,
-          userId: user?.id,
-          nucleus: selectedNucleus,
-          donorName: formData.fullName,
-          email: formData.email || user?.email,
-          cpf: formData.cpfCnpj,
-        },
-      });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Erro ao gerar PIX");
-      setPixData({
-        qr_code_base64: data.qr_code_base64,
-        qr_code: data.qr_code,
-        mp_transaction_id: data.mp_transaction_id,
-      });
-    } catch (err: any) {
-      toast({ title: "Erro ao gerar PIX", description: err.message || "Tente novamente", variant: "destructive" });
-    } finally {
-      setPixLoading(false);
-    }
-  };
-
-  const handleCopyPix = async () => {
-    if (pixData?.qr_code) {
-      await navigator.clipboard.writeText(pixData.qr_code);
-      setPixCopied(true);
-      toast({ title: "Código PIX copiado!" });
-      setTimeout(() => setPixCopied(false), 3000);
-    }
+    await pix.generatePix({
+      valor: selectedAmount,
+      nucleus: selectedNucleus,
+      donorName: formData.fullName,
+      email: formData.email || user?.email,
+      cpf: formData.cpfCnpj,
+    });
   };
 
   const handleCepBlur = (cep: string) => fetchAddressByCep(cep);
-
-  const handleNext = () => {
-    if (wizardStep < totalSteps) setWizardStep(wizardStep + 1);
-  };
-
-  const handleBack = () => {
-    if (wizardStep > 1) setWizardStep(wizardStep - 1);
-  };
+  const handleNext = () => { if (wizardStep < totalSteps) setWizardStep(wizardStep + 1); };
+  const handleBack = () => { if (wizardStep > 1) setWizardStep(wizardStep - 1); };
 
   const handleFullReset = () => {
-    setPixData(null);
+    pix.reset();
     setWizardStep(1);
     resetForm();
   };
 
-  // Is this the final step?
   const isFinalStep = wizardStep === totalSteps;
   const isFinalPixStep = isPix && wizardStep === 3;
 
-  // --- Result screens ---
-  if (pixData && isPaid) {
+  // --- PIX Paid Screen ---
+  if (pix.status === "paid") {
     return (
       <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
         <div className="container mx-auto px-4">
@@ -245,7 +181,37 @@ export function DonationSection() {
     );
   }
 
-  if (pixData) {
+  // --- PIX Expired Screen ---
+  if (pix.status === "expired") {
+    return (
+      <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto shadow-strong">
+            <CardContent className="pt-12 pb-8 space-y-6 text-center">
+              <div className="w-24 h-24 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+                <Clock className="w-14 h-14 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">PIX Expirado</h2>
+              <p className="text-muted-foreground">
+                O tempo para pagamento esgotou. Gere um novo código PIX para concluir sua doação.
+              </p>
+              <div className="pt-4 space-y-3">
+                <Button className="w-full gap-2" size="lg" onClick={handlePixDonation}>
+                  <RefreshCw className="w-5 h-5" /> Gerar Novo PIX
+                </Button>
+                <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>
+                  Cancelar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  // --- PIX Awaiting Payment Screen ---
+  if (pix.status === "awaiting_payment" && pix.pixData) {
     return (
       <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
         <div className="container mx-auto px-4">
@@ -255,35 +221,55 @@ export function DonationSection() {
                 <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
                   <QrCode className="w-8 h-8 text-primary" />
                 </div>
-                 <h2 className="text-2xl font-bold text-foreground">Falta pouco!</h2>
-                 <p className="text-muted-foreground">
-                   Escaneie o QR Code ou copie o código para pagar{" "}
-                   <strong>{selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
-                 </p>
+                <h2 className="text-2xl font-bold text-foreground">Falta pouco!</h2>
+                <p className="text-muted-foreground">
+                  Escaneie o QR Code ou copie o código para pagar{" "}
+                  <strong>{selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                </p>
               </div>
-              {pixData.qr_code_base64 && (
-                <div className="flex justify-center">
-                  <img src={`data:image/png;base64,${pixData.qr_code_base64}`} alt="QR Code PIX" className="w-64 h-64 rounded-lg border border-border" />
-                </div>
-              )}
-              {pixData.qr_code && (
+
+              {/* Countdown Timer */}
+              <div className="flex items-center justify-center gap-2 p-3 bg-muted/50 rounded-lg">
+                <Clock className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Expira em</span>
+                <span className={`font-mono font-bold text-lg ${pix.secondsLeft < 300 ? "text-destructive" : "text-foreground"}`}>
+                  {pix.formattedTime}
+                </span>
+              </div>
+
+              {/* QR Code placeholder - BB doesn't return base64, use copia-e-cola */}
+              {pix.pixData.pixCopiaECola && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Código Copia e Cola</Label>
                   <div className="flex gap-2">
-                    <Input value={pixData.qr_code} readOnly className="text-xs font-mono" onClick={(e) => (e.target as HTMLInputElement).select()} />
-                    <Button variant="outline" size="icon" onClick={handleCopyPix} className="shrink-0">
-                      {pixCopied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+                    <Input
+                      value={pix.pixData.pixCopiaECola}
+                      readOnly
+                      className="text-xs font-mono"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
+                    <Button variant="outline" size="icon" onClick={pix.copyPixCode} className="shrink-0">
+                      {pix.copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
                     </Button>
                   </div>
                 </div>
               )}
+
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Aguardando confirmação do pagamento...</span>
               </div>
-              <p className="text-xs text-center text-muted-foreground">ID da transação: {pixData.mp_transaction_id}</p>
-              <Button variant="outline" className="w-full" onClick={() => window.location.href = "/"}>Voltar ao Início</Button>
-              <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>Fazer Nova Doação</Button>
+
+              <p className="text-xs text-center text-muted-foreground">
+                TXID: {pix.pixData.txid}
+              </p>
+
+              <Button variant="outline" className="w-full" onClick={() => window.location.href = "/"}>
+                Voltar ao Início
+              </Button>
+              <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>
+                Fazer Nova Doação
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -291,6 +277,30 @@ export function DonationSection() {
     );
   }
 
+  // --- PIX Error Screen ---
+  if (pix.status === "error") {
+    return (
+      <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto shadow-strong">
+            <CardContent className="pt-12 pb-8 space-y-6 text-center">
+              <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="w-10 h-10 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Erro ao Gerar PIX</h2>
+              <p className="text-muted-foreground">{pix.error || "Houve um problema ao gerar o código PIX."}</p>
+              <div className="pt-4 space-y-3">
+                <Button className="w-full" onClick={handlePixDonation}>Tentar Novamente</Button>
+                <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>Cancelar</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  // --- Non-PIX result screens ---
   if (step === "success") {
     return (
       <section className="py-20 bg-gradient-to-b from-background to-muted/20">
@@ -620,12 +630,12 @@ export function DonationSection() {
                   size="lg"
                   className="bg-destructive hover:bg-destructive/90 text-destructive-foreground text-base md:text-lg px-6 py-5"
                   onClick={isPix ? handlePixDonation : submitDonation}
-                  disabled={(isSubmitting || pixLoading) || !canAdvance()}
+                  disabled={(isSubmitting || pix.status === "loading") || !canAdvance()}
                 >
-                  {(isSubmitting || pixLoading) ? (
+                  {(isSubmitting || pix.status === "loading") ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      {pixLoading ? "Gerando PIX..." : "Processando..."}
+                      {pix.status === "loading" ? "Gerando PIX..." : "Processando..."}
                     </>
                   ) : (
                     <>
