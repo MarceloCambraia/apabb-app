@@ -128,6 +128,7 @@ export type Database = {
           txid: string
           updated_at: string
           user_id: string | null
+          webhook_received_at: string | null
         }
         Insert: {
           amount: number
@@ -140,6 +141,7 @@ export type Database = {
           txid: string
           updated_at?: string
           user_id?: string | null
+          webhook_received_at?: string | null
         }
         Update: {
           amount?: number
@@ -152,6 +154,7 @@ export type Database = {
           txid?: string
           updated_at?: string
           user_id?: string | null
+          webhook_received_at?: string | null
         }
         Relationships: []
       }

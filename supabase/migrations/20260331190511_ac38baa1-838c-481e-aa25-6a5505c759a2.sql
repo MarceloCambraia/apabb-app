@@ -1,0 +1,1 @@
+ALTER TABLE public.pix_charges ADD COLUMN IF NOT EXISTS webhook_received_at timestamp with time zone;
