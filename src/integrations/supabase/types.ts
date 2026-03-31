@@ -116,6 +116,45 @@ export type Database = {
         }
         Relationships: []
       }
+      pix_charges: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          nucleus: string
+          pix_copia_cola: string | null
+          status: string
+          txid: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          nucleus?: string
+          pix_copia_cola?: string | null
+          status?: string
+          txid: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          nucleus?: string
+          pix_copia_cola?: string | null
+          status?: string
+          txid?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
