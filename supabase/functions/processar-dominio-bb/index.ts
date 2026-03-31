@@ -52,7 +52,8 @@ serve(async (req) => {
         calendario: { expiracao: 3600 },
         valor: { original: Number(body.valor).toFixed(2) },
         chave: Deno.env.get("BB_CHAVE_PIX_DESTINO"),
-        solicitacaoPagador: "Doação APABB"
+        solicitacaoPagador: "Doação APABB",
+        notificacoes: [{ url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/bb-pix-webhook` }]
       })
     });
     
