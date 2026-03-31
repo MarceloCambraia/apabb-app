@@ -76,7 +76,7 @@ async function createPixCharge(
   if (!response.ok) {
     const errorText = await response.text();
     console.error("PIX charge error:", response.status, errorText);
-    throw new Error(`Falha ao criar cobrança PIX: ${response.status}`);
+    throw new Error(`Falha API Pix BB: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
