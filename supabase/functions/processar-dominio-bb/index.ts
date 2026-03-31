@@ -49,7 +49,7 @@ async function createPixCharge(
   chavePixDestino: string,
   valor: number
 ): Promise<{ txid: string; pixCopiaECola: string }> {
-  const txid = crypto.randomUUID().replace(/-/g, "");
+  const txid = crypto.randomUUID().replace(/-/g, "").substring(0, 32);
   const valorFormatado = valor.toFixed(2);
 
   const endpoint = `https://api.hm.bb.com.br/pix/v2/cob/${txid}?gw-dev-app-key=${appKey}`;
