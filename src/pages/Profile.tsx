@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -6,16 +6,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { DollarSign, Heart, CalendarDays, Shield, Star, Crown, Gem } from 'lucide-react';
+import { DollarSign, Heart, CalendarDays, Shield, Star, Crown, Gem, Camera } from 'lucide-react';
+import { Header } from '@/components/Header';
 
 interface Donation {
   id: string;
   amount: number;
   payment_status: string;
   created_at: string;
+}
+
+interface Profile {
+  full_name: string | null;
+  avatar_url: string | null;
 }
 
 interface TierInfo {
@@ -56,10 +62,13 @@ export default function Profile() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profileName, setProfileName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/auth');
@@ -74,15 +83,76 @@ export default function Profile() {
     setLoading(true);
     try {
       const [profileRes, donationsRes] = await Promise.all([
-        supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+        supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single(),
         supabase.from('donations').select('id, amount, payment_status, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
       ]);
-      if (profileRes.data) setProfileName(profileRes.data.full_name);
+      if (profileRes.data) {
+        const profileData = profileRes.data as any;
+        setProfileName(profileData.full_name);
+        setAvatarUrl(profileData.avatar_url);
+      }
       if (donationsRes.data) setDonations(donationsRes.data);
     } catch (error: any) {
       toast({ title: 'Erro ao carregar dados', description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Erro', description: 'Por favor, selecione uma imagem.', variant: 'destructive' });
+      return;
+    }
+
+    // Validar tamanho (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Erro', description: 'A imagem deve ter no máximo 5MB.', variant: 'destructive' });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Gerar um nome de arquivo único
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // Fazer upload para o bucket "avatar"
+      const { error: uploadError, data } = await supabase.storage
+        .from('avatar')
+        .upload(filePath, file, { upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      // Obter a URL pública da imagem
+      const { data: publicUrlData } = supabase.storage
+        .from('avatar')
+        .getPublicUrl(filePath);
+
+      const publicUrl = publicUrlData?.publicUrl;
+
+      // Atualizar o banco de dados com a URL do avatar
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl } as any)
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      toast({ title: 'Sucesso', description: 'Avatar atualizado com sucesso!' });
+
+      // Resetar o input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (error: any) {
+      toast({ title: 'Erro ao fazer upload', description: error.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -130,22 +200,42 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <Header/>
       <div className="container mx-auto px-4 max-w-lg py-8 pb-28 md:pb-12 flex-1 space-y-6">
         
         {/* Header */}
         <div className="flex flex-col items-center space-y-3 pt-4">
-          <div
-            className="rounded-full p-1"
-            style={{
-              background: `linear-gradient(135deg, ${currentTier.color}, ${currentTier.color}88)`,
-              boxShadow: `0 0 24px ${currentTier.color}66, 0 0 48px ${currentTier.color}33`,
-            }}
-          >
-            <Avatar className="h-28 w-28 border-4 border-background">
-              <AvatarFallback className="text-2xl font-bold bg-card text-foreground">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+          <div className="flex flex-col items-center space-y-2">
+            <div
+              className="rounded-full p-1"
+              style={{
+                background: `linear-gradient(135deg, ${currentTier.color}, ${currentTier.color}88)`,
+                boxShadow: `0 0 24px ${currentTier.color}66, 0 0 48px ${currentTier.color}33`,
+              }}
+            >
+              <Avatar className="h-28 w-28 border-4 border-background">
+                {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />}
+                <AvatarFallback className="text-2xl font-bold bg-card text-foreground">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+              disabled={uploading}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-card/50 hover:bg-card border border-border/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Camera className="h-4 w-4" />
+              {uploading ? 'Enviando...' : 'Editar Avatar'}
+            </button>
           </div>
           <h1 className="text-2xl font-bold text-foreground">{displayName}</h1>
           <Badge
