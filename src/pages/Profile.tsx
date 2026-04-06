@@ -87,9 +87,8 @@ export default function Profile() {
         supabase.from('donations').select('id, amount, payment_status, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
       ]);
       if (profileRes.data) {
-        const profileData = profileRes.data as any;
-        setProfileName(profileData.full_name);
-        setAvatarUrl(profileData.avatar_url);
+        setProfileName(profileRes.data.full_name);
+        setAvatarUrl(profileRes.data.avatar_url);
       }
       if (donationsRes.data) setDonations(donationsRes.data);
     } catch (error: any) {
@@ -117,29 +116,25 @@ export default function Profile() {
 
     setUploading(true);
     try {
-      // Gerar um nome de arquivo único
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
 
-      // Fazer upload para o bucket "avatar"
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('avatar')
-        .upload(filePath, file, { upsert: false });
+        .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Obter a URL pública da imagem
       const { data: publicUrlData } = supabase.storage
         .from('avatar')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
       const publicUrl = publicUrlData?.publicUrl;
+      if (!publicUrl) throw new Error('Não foi possível obter a URL da imagem.');
 
-      // Atualizar o banco de dados com a URL do avatar
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl } as any)
+        .update({ avatar_url: publicUrl })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
