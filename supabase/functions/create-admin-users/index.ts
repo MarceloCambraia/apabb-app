@@ -116,7 +116,7 @@ serve(async (req) => {
           nucleus: admin.nucleus,
           email: admin.email,
           status: 'error',
-          error: error.message
+          error: (error as Error).message
         });
       }
     }
@@ -133,7 +133,7 @@ serve(async (req) => {
     );
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error as Error).message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
