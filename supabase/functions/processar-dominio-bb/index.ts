@@ -12,7 +12,11 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Unauthorized");
 
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!, 
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
     const { data: { user }, error: authErr } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (authErr || !user) throw new Error("Invalid Token");
 
@@ -25,7 +29,7 @@ serve(async (req) => {
       amount: body.valor, 
       expires_at: new Date(Date.now() + 3600000).toISOString()
     });
-    if (dbErr) throw new Error("DB Intent Error");
+    if (dbErr) throw new Error(`DB Intent Error: ${JSON.stringify(dbErr)}`);
 
     const now = Date.now();
     if (!tokenCache || now >= tokenCache.expiresAt - 120000) {
