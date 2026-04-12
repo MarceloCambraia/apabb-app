@@ -21,7 +21,7 @@ export function usePixPayment() {
   const { toast } = useToast();
   const expiresAtRef = useRef<number>(0);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Countdown timer
   useEffect(() => {

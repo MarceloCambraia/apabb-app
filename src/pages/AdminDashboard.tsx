@@ -123,7 +123,7 @@ export default function AdminDashboard() {
     }
   }, [isAdmin, nucleus, selectedMonth, selectedYear]);
 
-  // Realtime subscription for donations
+  // Realtime subscription for donations (all donations, no nucleus filter)
   useEffect(() => {
     if (!isAdmin || !nucleus) return;
 
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
       .channel('donations-realtime')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'donations', filter: `nucleus=eq.${nucleus}` },
+        { event: '*', schema: 'public', table: 'donations' },
         (payload) => {
           console.log('Realtime donation update:', payload);
 
@@ -154,7 +154,6 @@ export default function AdminDashboard() {
             setDonations((prev) =>
               prev.map((d) => (d.id === updated.id ? updated : d))
             );
-            // Recalculate totalAmount when status changes
             const wasPaid = old.payment_status === 'paid';
             const nowPaid = updated.payment_status === 'paid';
             if (!wasPaid && nowPaid) {
@@ -214,11 +213,10 @@ export default function AdminDashboard() {
       setLoading(true);
       const dateRange = getDateRange();
 
-      // Fetch donations
+      // Fetch ALL donations (no nucleus filter)
       let donationsQuery = supabase
         .from('donations')
         .select('*')
-        .eq('nucleus', nucleus)
         .order('created_at', { ascending: false });
 
       if (dateRange) {
@@ -229,7 +227,7 @@ export default function AdminDashboard() {
 
       if (donationsError) throw donationsError;
 
-      // Fetch associates
+      // Fetch associates (still nucleus-scoped)
       const { data: associatesData, error: associatesError } = await supabase
         .from('associates')
         .select('*')
@@ -238,7 +236,7 @@ export default function AdminDashboard() {
 
       if (associatesError) throw associatesError;
 
-      // Fetch volunteers
+      // Fetch volunteers (still nucleus-scoped)
       const { data: volunteersData, error: volunteersError } = await supabase
         .from('volunteers')
         .select('*')
@@ -247,7 +245,6 @@ export default function AdminDashboard() {
 
       if (volunteersError) throw volunteersError;
 
-      // Calculate stats — Receita Total only counts 'paid' donations
       const totalAmount = donationsData
         ?.filter((d) => d.payment_status === 'paid')
         .reduce((sum, d) => sum + Number(d.amount), 0) || 0;
@@ -388,7 +385,7 @@ export default function AdminDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Doações Recentes</CardTitle>
-                <CardDescription>Lista de todas as doações do seu núcleo</CardDescription>
+                <CardDescription>Lista de todas as doações (todos os núcleos)</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -464,9 +461,9 @@ export default function AdminDashboard() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Nome</TableHead>
-                          <TableHead>Email</TableHead>
+                          <TableHead>E-mail</TableHead>
                           <TableHead>Telefone</TableHead>
-                          <TableHead>Vínculo</TableHead>
+                          <TableHead>Relação</TableHead>
                           <TableHead>Data</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -476,15 +473,7 @@ export default function AdminDashboard() {
                             <TableCell className="font-medium">{associate.name}</TableCell>
                             <TableCell>{associate.email}</TableCell>
                             <TableCell>{associate.phone}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {associate.relationship === 'pcd' ? 'PCD' :
-                                 associate.relationship === 'pai' ? 'Pai/Mãe' :
-                                 associate.relationship === 'familiar' ? 'Familiar' :
-                                 associate.relationship === 'bb' ? 'Func. BB' :
-                                 'Comunidade'}
-                              </Badge>
-                            </TableCell>
+                            <TableCell>{associate.relationship}</TableCell>
                             <TableCell>{new Date(associate.created_at).toLocaleDateString('pt-BR')}</TableCell>
                           </TableRow>
                         ))}
@@ -517,9 +506,9 @@ export default function AdminDashboard() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Nome</TableHead>
-                          <TableHead>Email</TableHead>
+                          <TableHead>E-mail</TableHead>
                           <TableHead>Telefone</TableHead>
-                          <TableHead>Área de Interesse</TableHead>
+                          <TableHead>Área</TableHead>
                           <TableHead>Data</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -529,9 +518,7 @@ export default function AdminDashboard() {
                             <TableCell className="font-medium">{volunteer.name}</TableCell>
                             <TableCell>{volunteer.email}</TableCell>
                             <TableCell>{volunteer.phone}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{volunteer.interest_area}</Badge>
-                            </TableCell>
+                            <TableCell>{volunteer.interest_area}</TableCell>
                             <TableCell>{new Date(volunteer.created_at).toLocaleDateString('pt-BR')}</TableCell>
                           </TableRow>
                         ))}
@@ -544,12 +531,11 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="projects" className="mt-6">
-            {nucleus && <AdminProjectsManager nucleus={nucleus} />}
+            <AdminProjectsManager nucleus={nucleus || ''} />
           </TabsContent>
-
         </Tabs>
       </main>
-
+      
       <Footer />
     </div>
   );
