@@ -6,20 +6,21 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { 
+import { QRCodeSVG } from "qrcode.react";
+import {
   Heart, CreditCard, Building2, FileText, Wallet, QrCode,
   User, Mail, Phone, MapPin, Calendar, Loader2, CheckCircle2, AlertCircle, Copy, Check,
   ChevronLeft, ChevronRight, Clock, RefreshCw
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  useDonation, 
-  formatCurrency, 
-  formatCpfCnpj, 
-  formatPhone, 
-  formatCep, 
-  formatCardNumber 
+import {
+  useDonation,
+  formatCurrency,
+  formatCpfCnpj,
+  formatPhone,
+  formatCep,
+  formatCardNumber
 } from "@/hooks/useDonation";
 import { usePixPayment } from "@/hooks/usePixPayment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -218,12 +219,14 @@ export function DonationSection() {
           <Card className="max-w-lg mx-auto shadow-strong">
             <CardContent className="pt-8 pb-8 space-y-6">
               <div className="text-center space-y-2">
-                {pix.pixData.qrCodeBase64 ? (
-                  <img 
-                    src={`data:image/png;base64,${pix.pixData.qrCodeBase64}`}
-                    alt="QR Code PIX"
-                    className="w-48 h-48 mx-auto rounded-lg"
-                  />
+                {pix.pixData.pixCopiaECola ? (
+                  <div className="bg-white p-4 rounded-xl inline-block">
+                    <QRCodeSVG
+                      value={pix.pixData.pixCopiaECola}
+                      size={200}
+                      level="M"
+                    />
+                  </div>
                 ) : (
                   <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
                     <QrCode className="w-8 h-8 text-primary" />
@@ -380,13 +383,12 @@ export function DonationSection() {
               <div className="flex justify-between mt-3">
                 {Array.from({ length: totalSteps }, (_, i) => (
                   <div key={i} className="flex flex-col items-center gap-1">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                      i + 1 < wizardStep
-                        ? "bg-primary text-primary-foreground"
-                        : i + 1 === wizardStep
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${i + 1 < wizardStep
+                      ? "bg-primary text-primary-foreground"
+                      : i + 1 === wizardStep
                         ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
                         : "bg-muted text-muted-foreground"
-                    }`}>
+                      }`}>
                       {i + 1 < wizardStep ? <Check className="w-4 h-4" /> : i + 1}
                     </div>
                     <span className={`text-[10px] hidden md:block ${i + 1 === wizardStep ? "text-foreground font-medium" : "text-muted-foreground"}`}>
@@ -406,11 +408,10 @@ export function DonationSection() {
                     <button
                       key={amount.value}
                       onClick={() => { setAmount(amount.value); setUseCustomAmount(false); }}
-                      className={`relative p-4 rounded-xl border-2 transition-all hover:scale-105 ${
-                        selectedAmount === amount.value && !useCustomAmount
-                          ? "border-primary bg-primary/10 shadow-md"
-                          : "border-border hover:border-primary/50"
-                      } ${amount.recommended ? "ring-2 ring-secondary ring-offset-2" : ""}`}
+                      className={`relative p-4 rounded-xl border-2 transition-all hover:scale-105 ${selectedAmount === amount.value && !useCustomAmount
+                        ? "border-primary bg-primary/10 shadow-md"
+                        : "border-border hover:border-primary/50"
+                        } ${amount.recommended ? "ring-2 ring-secondary ring-offset-2" : ""}`}
                     >
                       {amount.recommended && (
                         <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full whitespace-nowrap font-medium">
@@ -462,9 +463,8 @@ export function DonationSection() {
                     <Label
                       key={method.value}
                       htmlFor={method.value}
-                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        paymentMethod === method.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-                      }`}
+                      className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === method.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                        }`}
                     >
                       <RadioGroupItem value={method.value} id={method.value} />
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -648,7 +648,7 @@ export function DonationSection() {
                   ) : (
                     <>
                       <Heart className="w-5 h-5 mr-2" />
-                      {isPix 
+                      {isPix
                         ? `Gerar PIX de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
                         : `Enviar Doação de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}${isRecurring ? "/mês" : ""}`
                       }
