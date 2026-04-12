@@ -25,25 +25,6 @@ import {
 import { usePixPayment } from "@/hooks/usePixPayment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const nucleusOptions = [
-  { value: "nacional", label: "Nacional" },
-  { value: "df", label: "Brasília - DF" },
-  { value: "sp", label: "São Paulo - SP" },
-  { value: "rj", label: "Rio de Janeiro - RJ" },
-  { value: "mg", label: "Belo Horizonte - MG" },
-  { value: "rs", label: "Porto Alegre - RS" },
-  { value: "ba", label: "Salvador - BA" },
-  { value: "pr", label: "Curitiba - PR" },
-  { value: "ce", label: "Fortaleza - CE" },
-  { value: "pe", label: "Recife - PE" },
-  { value: "go", label: "Goiânia - GO" },
-  { value: "pa", label: "Belém - PA" },
-  { value: "sc", label: "Florianópolis - SC" },
-  { value: "es", label: "Vitória - ES" },
-  { value: "rn", label: "Natal - RN" },
-  { value: "se", label: "Aracaju - SE" },
-];
-
 const donationAmounts = [
   { value: 25, label: "R$ 25", tier: "Apoiador" },
   { value: 40, label: "R$ 40", tier: "Parceiro" },
@@ -59,12 +40,6 @@ const paymentMethods = [
   { value: "payroll", label: "Folha de Pagamento", icon: Wallet, description: "Exclusivo aposentados BB" },
 ];
 
-const genderOptions = [
-  { value: "M", label: "Masculino" },
-  { value: "F", label: "Feminino" },
-  { value: "O", label: "Outro" },
-];
-
 const brazilianStates = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
   "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
@@ -72,6 +47,21 @@ const brazilianStates = [
 ];
 
 const stepLabels = ["Valor", "Pagamento", "Dados Pessoais", "Endereço"];
+
+/** Validates age is between 18 and 100 years. Returns error message or null. */
+function validateAge(birthDateStr: string): string | null {
+  if (!birthDateStr) return "Data de nascimento é obrigatória.";
+  const birth = new Date(birthDateStr);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  if (age < 18) return "Você precisa ter pelo menos 18 anos para fazer uma doação.";
+  if (age > 100) return "Por favor, verifique a data de nascimento informada.";
+  return null;
+}
 
 export function DonationSection() {
   const {
@@ -95,8 +85,8 @@ export function DonationSection() {
 
   const [customAmount, setCustomAmount] = useState("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
-  const [selectedNucleus, setSelectedNucleus] = useState("");
   const [wizardStep, setWizardStep] = useState(1);
+  const [ageError, setAgeError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -111,9 +101,9 @@ export function DonationSection() {
   const totalSteps = isPix ? 3 : 4;
   const progressPercent = (wizardStep / totalSteps) * 100;
 
-  const isStep1Valid = selectedAmount > 0 && !!selectedNucleus;
+  const isStep1Valid = selectedAmount > 0;
   const isStep2Valid = !!paymentMethod;
-  const isStep3Valid = !!(formData.fullName && formData.cpfCnpj && formData.email && formData.phone && formData.birthDate && formData.gender);
+  const isStep3Valid = !!(formData.fullName && formData.cpfCnpj && formData.birthDate);
   const isStep4Valid = !!(formData.cep && formData.address && formData.number && formData.neighborhood && formData.city && formData.state);
 
   const canAdvance = () => {
@@ -127,11 +117,20 @@ export function DonationSection() {
   };
 
   const handlePixDonation = async () => {
+    // Validate age before generating PIX
+    const ageErr = validateAge(formData.birthDate || "");
+    if (ageErr) {
+      setAgeError(ageErr);
+      toast({ title: "Erro de validação", description: ageErr, variant: "destructive" });
+      return;
+    }
+    setAgeError(null);
+
     await pix.generatePix({
       valor: selectedAmount,
-      nucleus: selectedNucleus,
+      nucleus: "geral",
       donorName: formData.fullName,
-      email: formData.email || user?.email,
+      email: user?.email,
       cpf: formData.cpfCnpj,
     });
   };
@@ -144,6 +143,7 @@ export function DonationSection() {
     pix.reset();
     setWizardStep(1);
     resetForm();
+    setAgeError(null);
   };
 
   const isFinalStep = wizardStep === totalSteps;
@@ -248,7 +248,6 @@ export function DonationSection() {
                 </span>
               </div>
 
-              {/* QR Code placeholder - BB doesn't return base64, use copia-e-cola */}
               {pix.pixData.pixCopiaECola && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Código Copia e Cola</Label>
@@ -379,7 +378,6 @@ export function DonationSection() {
                 </span>
               </div>
               <Progress value={progressPercent} className="h-2" />
-              {/* Step dots */}
               <div className="flex justify-between mt-3">
                 {Array.from({ length: totalSteps }, (_, i) => (
                   <div key={i} className="flex flex-col items-center gap-1">
@@ -428,20 +426,6 @@ export function DonationSection() {
                   <input type="checkbox" id="customAmount" checked={useCustomAmount} onChange={(e) => setUseCustomAmount(e.target.checked)} className="w-4 h-4 rounded border-primary text-primary" />
                   <Label htmlFor="customAmount" className="text-sm">Outro valor:</Label>
                   <Input type="text" placeholder="R$ 0,00" value={customAmount} onChange={(e) => setCustomAmount(formatCurrency(e.target.value))} disabled={!useCustomAmount} className="max-w-[150px]" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Destino da Doação (Núcleo) *</Label>
-                  <Select value={selectedNucleus} onValueChange={setSelectedNucleus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o núcleo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {nucleusOptions.map((n) => (
-                        <SelectItem key={n.value} value={n.value}>{n.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
@@ -535,7 +519,7 @@ export function DonationSection() {
               </div>
             )}
 
-            {/* Step 3: Dados Pessoais */}
+            {/* Step 3: Dados Pessoais (simplified for PIX: only name, CPF, birthDate) */}
             {wizardStep === 3 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <h3 className="text-lg font-semibold text-foreground">Dados Pessoais</h3>
@@ -546,32 +530,15 @@ export function DonationSection() {
                     {errors.fullName && <p className="text-sm text-destructive mt-1">{errors.fullName}</p>}
                   </div>
                   <div>
-                    <Label htmlFor="cpfCnpj">CPF/CNPJ</Label>
+                    <Label htmlFor="cpfCnpj">CPF</Label>
                     <Input id="cpfCnpj" placeholder="000.000.000-00" value={formData.cpfCnpj || ""} onChange={(e) => updateFormData({ cpfCnpj: formatCpfCnpj(e.target.value) })} maxLength={18} className={errors.cpfCnpj ? "border-destructive" : ""} />
                     {errors.cpfCnpj && <p className="text-sm text-destructive mt-1">{errors.cpfCnpj}</p>}
                   </div>
                   <div>
                     <Label htmlFor="birthDate" className="flex items-center gap-2"><Calendar className="w-4 h-4" /> Data de Nascimento</Label>
-                    <Input id="birthDate" type="date" value={formData.birthDate || ""} onChange={(e) => updateFormData({ birthDate: e.target.value })} className={errors.birthDate ? "border-destructive" : ""} />
+                    <Input id="birthDate" type="date" value={formData.birthDate || ""} onChange={(e) => { updateFormData({ birthDate: e.target.value }); setAgeError(null); }} className={errors.birthDate || ageError ? "border-destructive" : ""} />
                     {errors.birthDate && <p className="text-sm text-destructive mt-1">{errors.birthDate}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="gender">Sexo</Label>
-                    <Select value={formData.gender || ""} onValueChange={(v) => updateFormData({ gender: v as "M" | "F" | "O" })}>
-                      <SelectTrigger className={errors.gender ? "border-destructive" : ""}><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent>{genderOptions.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
-                    </Select>
-                    {errors.gender && <p className="text-sm text-destructive mt-1">{errors.gender}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="email" className="flex items-center gap-2"><Mail className="w-4 h-4" /> E-mail</Label>
-                    <Input id="email" type="email" placeholder="seu@email.com" value={formData.email || ""} onChange={(e) => updateFormData({ email: e.target.value })} className={errors.email ? "border-destructive" : ""} />
-                    {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="phone" className="flex items-center gap-2"><Phone className="w-4 h-4" /> Telefone</Label>
-                    <Input id="phone" placeholder="(00) 00000-0000" value={formData.phone || ""} onChange={(e) => updateFormData({ phone: formatPhone(e.target.value) })} maxLength={15} className={errors.phone ? "border-destructive" : ""} />
-                    {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone}</p>}
+                    {ageError && <p className="text-sm text-destructive mt-1">{ageError}</p>}
                   </div>
                 </div>
               </div>
