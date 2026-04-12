@@ -7,6 +7,7 @@ export type PixStatus = "idle" | "loading" | "awaiting_payment" | "paid" | "expi
 interface PixPaymentData {
   pixCopiaECola: string;
   txid: string;
+  qrCodeBase64?: string | null;
 }
 
 const PIX_EXPIRATION_MS = 60 * 60 * 1000; // 60 minutes
@@ -86,10 +87,13 @@ export function usePixPayment() {
 
         const pixCopiaECola = data.pixCopiaECola;
         const txid = data.txid || data.loc?.id;
-
         if (!pixCopiaECola) throw new Error("pixCopiaECola não retornado");
 
-        setPixData({ pixCopiaECola, txid });
+        setPixData({ 
+          pixCopiaECola, 
+          txid,
+          qrCodeBase64: data.qrCodeBase64 || null
+        });
         expiresAtRef.current = Date.now() + PIX_EXPIRATION_MS;
         setSecondsLeft(Math.floor(PIX_EXPIRATION_MS / 1000));
         setStatus("awaiting_payment");

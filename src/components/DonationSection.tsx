@@ -218,9 +218,17 @@ export function DonationSection() {
           <Card className="max-w-lg mx-auto shadow-strong">
             <CardContent className="pt-8 pb-8 space-y-6">
               <div className="text-center space-y-2">
-                <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-                  <QrCode className="w-8 h-8 text-primary" />
-                </div>
+                {pix.pixData.qrCodeBase64 ? (
+                  <img 
+                    src={`data:image/png;base64,${pix.pixData.qrCodeBase64}`}
+                    alt="QR Code PIX"
+                    className="w-48 h-48 mx-auto rounded-lg"
+                  />
+                ) : (
+                  <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                    <QrCode className="w-8 h-8 text-primary" />
+                  </div>
+                )}
                 <h2 className="text-2xl font-bold text-foreground">Falta pouco!</h2>
                 <p className="text-muted-foreground">
                   Escaneie o QR Code ou copie o código para pagar{" "}
