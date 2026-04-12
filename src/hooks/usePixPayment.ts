@@ -7,10 +7,10 @@ export type PixStatus = "idle" | "loading" | "awaiting_payment" | "paid" | "expi
 interface PixPaymentData {
   pixCopiaECola: string;
   txid: string;
-  qrCodeBase64?: string | null;
 }
 
 const PIX_EXPIRATION_MS = 60 * 60 * 1000; // 60 minutes
+const POLLING_INTERVAL_MS = 5000; // 5 seconds
 
 export function usePixPayment() {
   const [status, setStatus] = useState<PixStatus>("idle");
@@ -21,6 +21,7 @@ export function usePixPayment() {
   const { toast } = useToast();
   const expiresAtRef = useRef<number>(0);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // Countdown timer
   useEffect(() => {
@@ -40,9 +41,51 @@ export function usePixPayment() {
     return () => clearInterval(interval);
   }, [status]);
 
-  // Realtime subscription
+  // Polling fallback - checks payment status every 5 seconds
   useEffect(() => {
     if (status !== "awaiting_payment" || !pixData?.txid) return;
+
+    const checkPaymentStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("pix_charges")
+          .select("status")
+          .eq("txid", pixData.txid)
+          .single();
+
+        if (error) {
+          console.warn("Polling error:", error);
+          return;
+        }
+
+        if (data?.status === "paid") {
+          console.log("Payment confirmed via polling!");
+          setStatus("paid");
+          toast({ title: "Pagamento confirmado! ✅", description: "Obrigado pela sua doação." });
+        }
+      } catch (err) {
+        console.warn("Polling check failed:", err);
+      }
+    };
+
+    // Start polling
+    pollingRef.current = setInterval(checkPaymentStatus, POLLING_INTERVAL_MS);
+    console.log("Polling started for txid:", pixData.txid);
+
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+        console.log("Polling stopped");
+      }
+    };
+  }, [status, pixData?.txid, toast]);
+
+  // Realtime subscription (keeping as backup, but polling is primary now)
+  useEffect(() => {
+    if (status !== "awaiting_payment" || !pixData?.txid) return;
+
+    console.log("Setting up Realtime subscription for txid:", pixData.txid);
 
     const channel = supabase
       .channel(`pix-${pixData.txid}`)
@@ -55,6 +98,7 @@ export function usePixPayment() {
           filter: `txid=eq.${pixData.txid}`,
         },
         (payload) => {
+          console.log("Realtime event received:", payload);
           const newStatus = (payload.new as any)?.status;
           if (newStatus === "paid") {
             setStatus("paid");
@@ -62,7 +106,9 @@ export function usePixPayment() {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Realtime subscription status:", status);
+      });
 
     channelRef.current = channel;
 
@@ -87,13 +133,10 @@ export function usePixPayment() {
 
         const pixCopiaECola = data.pixCopiaECola;
         const txid = data.txid || data.loc?.id;
+
         if (!pixCopiaECola) throw new Error("pixCopiaECola não retornado");
 
-        setPixData({ 
-          pixCopiaECola, 
-          txid,
-          qrCodeBase64: data.qrCodeBase64 || null
-        });
+        setPixData({ pixCopiaECola, txid });
         expiresAtRef.current = Date.now() + PIX_EXPIRATION_MS;
         setSecondsLeft(Math.floor(PIX_EXPIRATION_MS / 1000));
         setStatus("awaiting_payment");
@@ -119,6 +162,10 @@ export function usePixPayment() {
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
+    }
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
     }
     setStatus("idle");
     setPixData(null);
