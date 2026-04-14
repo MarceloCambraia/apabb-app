@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  signUp: (email: string, password: string, fullName: string, phone: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, phone: string, birthDate: string, age: number) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, phone: string) => {
+  const signUp = async (email: string, password: string, fullName: string, phone: string, birthDate: string, age: number) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -49,7 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
-          phone: phone
+          phone: phone,
+          birth_date: birthDate,
+          age: age
         }
       }
     });

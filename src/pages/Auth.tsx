@@ -27,7 +27,10 @@ const Auth = () => {
     email: "",
     phone: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    birthDay: "",
+    birthMonth: "",
+    birthYear: ""
   });
 
   // Redirect if already logged in
@@ -83,13 +86,47 @@ const Auth = () => {
       return;
     }
 
+    // Calculate birth date and age
+    const birthDay = parseInt(signupData.birthDay);
+    const birthMonth = parseInt(signupData.birthMonth);
+    const birthYear = parseInt(signupData.birthYear);
+
+    if (!birthDay || !birthMonth || !birthYear || birthDay < 1 || birthDay > 31 || birthMonth < 1 || birthMonth > 12 || birthYear < 1900 || birthYear > new Date().getFullYear()) {
+      toast({
+        title: "Erro",
+        description: "Data de nascimento inválida",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const birthDateStr = `${birthYear}-${birthMonth.toString().padStart(2, '0')}-${birthDay.toString().padStart(2, '0')}`;
+    const birthDateObj = new Date(birthYear, birthMonth - 1, birthDay);
+    const today = new Date();
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const monthDiff = today.getMonth() - birthDateObj.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+      age--;
+    }
+
+    if (age < 18 || age > 100) {
+      toast({
+        title: "Erro",
+        description: "Insira idade válida",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     const { error } = await signUp(
       signupData.email,
       signupData.password,
       signupData.fullName,
-      signupData.phone
+      signupData.phone,
+      birthDateStr,
+      age
     );
 
     if (error) {
@@ -110,7 +147,10 @@ const Auth = () => {
         email: "",
         phone: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        birthDay: "",
+        birthMonth: "",
+        birthYear: ""
       });
     }
 
@@ -219,6 +259,48 @@ const Auth = () => {
                         onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
                         required
                       />
+                    </div>
+
+                    <div>
+                      <Label>Data de Nascimento</Label>
+                      <div className="flex space-x-2">
+                        <div className="flex-1">
+                          <Input
+                            id="signup-birth-day"
+                            type="number"
+                            placeholder="Dia"
+                            value={signupData.birthDay}
+                            onChange={(e) => setSignupData({ ...signupData, birthDay: e.target.value })}
+                            min="1"
+                            max="31"
+                            required
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Input
+                            id="signup-birth-month"
+                            type="number"
+                            placeholder="Mês"
+                            value={signupData.birthMonth}
+                            onChange={(e) => setSignupData({ ...signupData, birthMonth: e.target.value })}
+                            min="1"
+                            max="12"
+                            required
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Input
+                            id="signup-birth-year"
+                            type="number"
+                            placeholder="Ano"
+                            value={signupData.birthYear}
+                            onChange={(e) => setSignupData({ ...signupData, birthYear: e.target.value })}
+                            min="1900"
+                            max={new Date().getFullYear().toString()}
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     <div>
