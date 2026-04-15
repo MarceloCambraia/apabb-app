@@ -11,6 +11,8 @@
 | Data | Versão | Descrição | Autor |
 |------|--------|-----------|-------|
 | 04/12/2024 | 1.0 | Criação do documento | Equipe APABB |
+|------------|-----|----------------------|--------------|
+| 14/04/2026 | 1.1 | Inclusão de Gamificação e Módulo de Voluntariado | Equipe APABB |
 
 ---
 
@@ -46,6 +48,7 @@ O sistema APABB Together é uma plataforma digital multiplataforma (Web, Android
 
 - **Captação de Doações**: Fluxo otimizado para doações únicas e recorrentes (mensais)
 - **Clube de Benefícios**: Programa de fidelidade para doadores recorrentes com descontos em empresas parceiras
+- **Engajamento Gamificado**: Perfil de usuário com sistema de progressão, metas de contribuição e reconhecimento por conquistas para incentivar a retenção
 - **Voluntariado**: Cadastro e gestão de voluntários por área de interesse
 - **Associação**: Registro de novos associados à APABB
 - **Projetos Regionais**: Divulgação dos projetos de cada um dos 15 núcleos regionais
@@ -70,6 +73,7 @@ A prioridade principal é a captação de **doações recorrentes mensais**, que
 - **Transparência Total**: Portal dedicado com relatórios de impacto e histórias de transformação
 - **Experiência Mobile-First**: Design responsivo otimizado para dispositivos móveis
 - **Integração de Conteúdo**: Notícias e eventos sincronizados automaticamente do site institucional
+- **Fidelização por Gamificação**: O uso de níveis e insígnias transforma a doação em uma jornada de impacto visível para o doador
 
 ---
 
@@ -120,42 +124,42 @@ Biblioteca para gerenciamento de estado assíncrono em React. Simplifica o fetch
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        CLIENTE                                   │
+│                        CLIENTE                                  │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
 │  │   Web App   │  │  Android    │  │    iOS      │              │
 │  │   (React)   │  │ (Capacitor) │  │ (Capacitor) │              │
 │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘              │
-│         │                │                │                      │
-│         └────────────────┼────────────────┘                      │
-│                          │                                       │
-└──────────────────────────┼───────────────────────────────────────┘
+│         │                │                │                     │
+│         └────────────────┼────────────────┘                     │
+│                          │                                      │
+└──────────────────────────┼──────────────────────────────────────┘
                            │
                            │ HTTPS
                            ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      SUPABASE CLOUD                              │
+│                      SUPABASE CLOUD                             │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │                    API Gateway                           │    │
-│  │              (PostgREST + GoTrue)                        │    │
+│  │                    API Gateway                           │   │
+│  │              (PostgREST + GoTrue)                        │   │
 │  └─────────────────────────┬───────────────────────────────┘    │
-│                            │                                     │
+│                            │                                    │
 │  ┌────────────┐  ┌────────┴───────┐  ┌─────────────────┐        │
 │  │   Auth     │  │   PostgreSQL   │  │  Edge Functions │        │
 │  │  Service   │  │   + RLS        │  │   (Deno)        │        │
 │  └────────────┘  └────────────────┘  └─────────────────┘        │
-│                                                                  │
+│                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │                    Storage                               │    │
-│  │              (Arquivos e Imagens)                        │    │
+│  │                    Storage                               │   │
+│  │              (Arquivos e Imagens)                        │   │
 │  └─────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────┘
                            │
                            │ Web Scraping
                            ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                   SITE INSTITUCIONAL                             │
-│                  https://www.apabb.org.br/                       │
-│              (Fonte de Notícias e Eventos)                       │
+│                   SITE INSTITUCIONAL                            │
+│                  https://www.apabb.org.br/                      │
+│              (Fonte de Notícias e Eventos)                      │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -191,26 +195,26 @@ O backend do APABB Together utiliza a arquitetura serverless do Supabase, com os
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         auth.users                               │
+│                         auth.users                              │
 │  (Gerenciado pelo Supabase Auth)                                │
 │  ┌─────────────┬──────────────────────────────────────────┐     │
-│  │ id          │ UUID (PK)                                 │     │
-│  │ email       │ VARCHAR                                   │     │
-│  │ created_at  │ TIMESTAMP                                 │     │
+│  │ id          │ UUID (PK)                                 │    │
+│  │ email       │ VARCHAR                                   │    │
+│  │ created_at  │ TIMESTAMP                                 │    │
 │  └─────────────┴──────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               │ 1:1
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                         profiles                                 │
+│                         profiles                                │
 │  ┌─────────────┬──────────────────────────────────────────┐     │
-│  │ id          │ UUID (PK)                                 │     │
-│  │ full_name   │ TEXT                                      │     │
-│  │ phone       │ TEXT                                      │     │
-│  │ nucleus     │ TEXT                                      │     │
-│  │ created_at  │ TIMESTAMP                                 │     │
-│  │ updated_at  │ TIMESTAMP                                 │     │
+│  │ id          │ UUID (PK)                                 │    │
+│  │ full_name   │ TEXT                                      │    │
+│  │ phone       │ TEXT                                      │    │
+│  │ nucleus     │ TEXT                                      │    │
+│  │ created_at  │ TIMESTAMP                                 │    │
+│  │ updated_at  │ TIMESTAMP                                 │    │
 │  └─────────────┴──────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -233,17 +237,17 @@ O backend do APABB Together utiliza a arquitetura serverless do Supabase, com os
                                         └─────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                        volunteers                                │
+│                        volunteers                               │
 │  ┌─────────────┬──────────────────────────────────────────┐     │
-│  │ id          │ UUID (PK)                                 │     │
-│  │ name        │ TEXT                                      │     │
-│  │ email       │ TEXT                                      │     │
-│  │ phone       │ TEXT                                      │     │
-│  │ nucleus     │ TEXT                                      │     │
-│  │ interest_   │ TEXT                                      │     │
-│  │ area        │                                           │     │
-│  │ message     │ TEXT                                      │     │
-│  │ created_at  │ TIMESTAMP                                 │     │
+│  │ id          │ UUID (PK)                                 │    │
+│  │ name        │ TEXT                                      │    │
+│  │ email       │ TEXT                                      │    │
+│  │ phone       │ TEXT                                      │    │
+│  │ nucleus     │ TEXT                                      │    │
+│  │ interest_   │ TEXT                                      │    │
+│  │ area        │                                           │    │
+│  │ message     │ TEXT                                      │    │
+│  │ created_at  │ TIMESTAMP                                 │    │
 │  └─────────────┴──────────────────────────────────────────┘     │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -273,29 +277,29 @@ A interface do APABB Together foi projetada seguindo os princípios de:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                         HOME                                     │
+│                         HOME                                    │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │  Hero Banner + CTA Doação                                │    │
-│  │  Seção de Doação Rápida                                  │    │
-│  │  Cards de Navegação                                      │    │
+│  │  Hero Banner + CTA Doação                                │   │
+│  │  Seção de Doação Rápida                                  │   │
+│  │  Cards de Navegação                                      │   │
 │  └─────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────┘
                               │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-        ▼                     ▼                     ▼
-┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-│    DOAR       │     │   PROJETOS    │     │  VOLUNTARIADO │
-│               │     │               │     │               │
-│ • Valor único │     │ • Por núcleo  │     │ • Cadastro    │
-│ • Recorrente  │     │ • Detalhes    │     │ • Áreas       │
-│ • PIX/Cartão  │     │ • Impacto     │     │ • Disponib.   │
-└───────────────┘     └───────────────┘     └───────────────┘
+        ┌─────────────────────┼─────────────────────┐──────────────────────┐
+        │                     │                     │                      │
+        ▼                     ▼                     ▼                      ▼
+┌───────────────┐     ┌───────────────┐     ┌───────────────┐      ┌────────────────┐
+│    DOAR       │     │   PROJETOS    │     │  VOLUNTARIADO │      │     PERFIL     │
+│               │     │               │     │               │      │                │
+│ • Valor único │     │ • Por núcleo  │     │ • Cadastro    │      │ • Dashboard    │
+│ • Recorrente  │     │ • Detalhes    │     │ • Áreas       │      │ • Conquistas   │
+│ • PIX/Cartão  │     │ • Impacto     │     │ • Disponib.   │      │ • Estatísticas │
+└───────────────┘     └───────────────┘     └───────────────┘      └────────────────┘
         │
         ▼
 ┌───────────────────────────────────────────────────────────────┐
-│                    CLUBE DE BENEFÍCIOS                         │
-│  (Acesso exclusivo para doadores recorrentes)                  │
+│                    CLUBE DE BENEFÍCIOS                        │
+│  (Acesso exclusivo para doadores recorrentes)                 │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
 │  │  Parceiro 1 │  │  Parceiro 2 │  │  Parceiro 3 │            │
 │  │  Desconto % │  │  Desconto % │  │  Desconto % │            │
