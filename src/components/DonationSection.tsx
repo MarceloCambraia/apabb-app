@@ -23,6 +23,7 @@ import {
   formatCardNumber
 } from "@/hooks/useDonation";
 import { usePixPayment } from "@/hooks/usePixPayment";
+import { useBoletoPayment } from "@/hooks/useBoletoPayment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const donationAmounts = [
@@ -34,10 +35,8 @@ const donationAmounts = [
 
 const paymentMethods = [
   { value: "pix", label: "PIX", icon: QrCode, description: "Pagamento instantâneo" },
-  { value: "debit_bb", label: "Débito em Conta BB", icon: Building2, description: "Banco do Brasil" },
   { value: "credit_card", label: "Cartão de Crédito", icon: CreditCard, description: "Visa, Master, Elo" },
-  { value: "boleto", label: "Boleto Bancário", icon: FileText, description: "Vencimento em 3 dias" },
-  { value: "payroll", label: "Folha de Pagamento", icon: Wallet, description: "Exclusivo aposentados BB" },
+  { value: "boleto", label: "Boleto Bancário", icon: FileText, description: "Vencimento em 3 dias úteis" },
 ];
 
 const brazilianStates = [
@@ -82,6 +81,7 @@ export function DonationSection() {
   } = useDonation();
 
   const pix = usePixPayment();
+  const boletoHook = useBoletoPayment();
 
   const [customAmount, setCustomAmount] = useState("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
@@ -135,12 +135,40 @@ export function DonationSection() {
     });
   };
 
+  const handleBoletoDonation = async () => {
+    const ageErr = validateAge(formData.birthDate || "");
+    if (ageErr) {
+      setAgeError(ageErr);
+      toast({ title: "Erro de validação", description: ageErr, variant: "destructive" });
+      return;
+    }
+    setAgeError(null);
+
+    await boletoHook.generateBoleto({
+      valor: selectedAmount,
+      pagador: {
+        nome: formData.fullName || "",
+        cpf: formData.cpfCnpj || "",
+        endereco: {
+          cep: formData.cep || "",
+          address: formData.address || "",
+          number: formData.number || "",
+          complement: formData.complement,
+          neighborhood: formData.neighborhood || "",
+          city: formData.city || "",
+          state: formData.state || "",
+        },
+      },
+    });
+  };
+
   const handleCepBlur = (cep: string) => fetchAddressByCep(cep);
   const handleNext = () => { if (wizardStep < totalSteps) setWizardStep(wizardStep + 1); };
   const handleBack = () => { if (wizardStep > 1) setWizardStep(wizardStep - 1); };
 
   const handleFullReset = () => {
     pix.reset();
+    boletoHook.reset();
     setWizardStep(1);
     resetForm();
     setAgeError(null);
