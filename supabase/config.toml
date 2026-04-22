@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.bb-pix-webhook]
 verify_jwt = false
+
+[functions.gerar-boleto-bb]
+verify_jwt = false
