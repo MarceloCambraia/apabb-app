@@ -707,20 +707,32 @@ export function DonationSection() {
                 <Button
                   size="lg"
                   className="bg-destructive hover:bg-destructive/90 text-destructive-foreground text-base md:text-lg px-6 py-5"
-                  onClick={isPix ? handlePixDonation : submitDonation}
-                  disabled={(isSubmitting || pix.status === "loading") || !canAdvance()}
+                  onClick={
+                    isPix
+                      ? handlePixDonation
+                      : paymentMethod === "boleto"
+                        ? handleBoletoDonation
+                        : submitDonation
+                  }
+                  disabled={(isSubmitting || pix.status === "loading" || boletoHook.status === "loading") || !canAdvance()}
                 >
-                  {(isSubmitting || pix.status === "loading") ? (
+                  {(isSubmitting || pix.status === "loading" || boletoHook.status === "loading") ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      {pix.status === "loading" ? "Gerando PIX..." : "Processando..."}
+                      {pix.status === "loading"
+                        ? "Gerando PIX..."
+                        : boletoHook.status === "loading"
+                          ? "Gerando Boleto..."
+                          : "Processando..."}
                     </>
                   ) : (
                     <>
                       <Heart className="w-5 h-5 mr-2" />
                       {isPix
                         ? `Gerar PIX de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
-                        : `Enviar Doação de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}${isRecurring ? "/mês" : ""}`
+                        : paymentMethod === "boleto"
+                          ? `Gerar Boleto de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
+                          : `Enviar Doação de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}${isRecurring ? "/mês" : ""}`
                       }
                     </>
                   )}
