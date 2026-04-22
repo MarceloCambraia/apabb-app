@@ -338,6 +338,98 @@ export function DonationSection() {
     );
   }
 
+  // --- Boleto Ready Screen ---
+  if (boletoHook.status === "ready" && boletoHook.boleto) {
+    const b = boletoHook.boleto;
+    const dueDateFormatted = new Date(b.dueDate + "T00:00:00").toLocaleDateString("pt-BR");
+    return (
+      <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto shadow-strong">
+            <CardContent className="pt-8 pb-8 space-y-6">
+              <div className="text-center space-y-2">
+                <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                  <FileText className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold text-foreground">Boleto Gerado!</h2>
+                <p className="text-muted-foreground">
+                  Pague até <strong>{dueDateFormatted}</strong> o valor de{" "}
+                  <strong>{b.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                </p>
+              </div>
+
+              {b.linhaDigitavel && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Linha Digitável</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={b.linhaDigitavel}
+                      readOnly
+                      className="text-xs font-mono"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
+                    <Button variant="outline" size="icon" onClick={boletoHook.copyLinhaDigitavel} className="shrink-0">
+                      {boletoHook.copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {b.codigoBarras && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Código de Barras</Label>
+                  <Input value={b.codigoBarras} readOnly className="text-xs font-mono" />
+                </div>
+              )}
+
+              {b.pdfUrl && (
+                <Button className="w-full" size="lg" asChild>
+                  <a href={b.pdfUrl} target="_blank" rel="noopener noreferrer">
+                    <FileText className="w-5 h-5 mr-2" /> Visualizar / Baixar PDF
+                  </a>
+                </Button>
+              )}
+
+              <p className="text-xs text-center text-muted-foreground">
+                Nosso Número: {b.nossoNumero}
+              </p>
+
+              <Button variant="outline" className="w-full" onClick={() => window.location.href = "/"}>
+                Voltar ao Início
+              </Button>
+              <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>
+                Fazer Nova Doação
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  // --- Boleto Error Screen ---
+  if (boletoHook.status === "error") {
+    return (
+      <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto shadow-strong">
+            <CardContent className="pt-12 pb-8 space-y-6 text-center">
+              <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="w-10 h-10 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Erro ao Gerar Boleto</h2>
+              <p className="text-muted-foreground">{boletoHook.error || "Houve um problema ao gerar o boleto."}</p>
+              <div className="pt-4 space-y-3">
+                <Button className="w-full" onClick={handleBoletoDonation}>Tentar Novamente</Button>
+                <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>Cancelar</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
   // --- Non-PIX result screens ---
   if (step === "success") {
     return (
