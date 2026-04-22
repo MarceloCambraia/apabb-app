@@ -527,23 +527,6 @@ export function DonationSection() {
                     <p className="text-xs text-muted-foreground flex items-center gap-1">🔒 Seus dados são criptografados e não armazenados localmente</p>
                   </div>
                 )}
-
-                {/* BB debit fields inline */}
-                {paymentMethod === "debit_bb" && (
-                  <div className="mt-4 p-4 bg-muted/30 rounded-xl space-y-4 animate-in slide-in-from-top-2">
-                    <h4 className="font-medium text-foreground flex items-center gap-2"><Building2 className="w-4 h-4" /> Dados Bancários - Banco do Brasil</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="bankAgency">Agência</Label>
-                        <Input id="bankAgency" placeholder="0000-0" value={formData.bankAgency || ""} onChange={(e) => updateFormData({ bankAgency: e.target.value.replace(/\D/g, "").slice(0, 5) })} />
-                      </div>
-                      <div>
-                        <Label htmlFor="bankAccount">Conta Corrente</Label>
-                        <Input id="bankAccount" placeholder="00000-0" value={formData.bankAccount || ""} onChange={(e) => updateFormData({ bankAccount: e.target.value.replace(/\D/g, "").slice(0, 8) })} />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
