@@ -77,6 +77,66 @@ export type Database = {
         }
         Relationships: []
       }
+      boleto_charges: {
+        Row: {
+          amount: number
+          bb_response: Json | null
+          codigo_barras: string | null
+          created_at: string
+          due_date: string
+          id: string
+          linha_digitavel: string | null
+          nosso_numero: string | null
+          numero_convenio: string | null
+          pagador_cpf: string
+          pagador_endereco: Json | null
+          pagador_nome: string
+          pdf_url: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          webhook_received_at: string | null
+        }
+        Insert: {
+          amount: number
+          bb_response?: Json | null
+          codigo_barras?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          linha_digitavel?: string | null
+          nosso_numero?: string | null
+          numero_convenio?: string | null
+          pagador_cpf: string
+          pagador_endereco?: Json | null
+          pagador_nome: string
+          pdf_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          webhook_received_at?: string | null
+        }
+        Update: {
+          amount?: number
+          bb_response?: Json | null
+          codigo_barras?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          linha_digitavel?: string | null
+          nosso_numero?: string | null
+          numero_convenio?: string | null
+          pagador_cpf?: string
+          pagador_endereco?: Json | null
+          pagador_nome?: string
+          pdf_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          webhook_received_at?: string | null
+        }
+        Relationships: []
+      }
       donations: {
         Row: {
           amount: number
