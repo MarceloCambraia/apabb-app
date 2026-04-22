@@ -23,6 +23,7 @@ import {
   formatCardNumber
 } from "@/hooks/useDonation";
 import { usePixPayment } from "@/hooks/usePixPayment";
+import { useBoletoPayment } from "@/hooks/useBoletoPayment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const donationAmounts = [
@@ -34,10 +35,8 @@ const donationAmounts = [
 
 const paymentMethods = [
   { value: "pix", label: "PIX", icon: QrCode, description: "Pagamento instantâneo" },
-  { value: "debit_bb", label: "Débito em Conta BB", icon: Building2, description: "Banco do Brasil" },
   { value: "credit_card", label: "Cartão de Crédito", icon: CreditCard, description: "Visa, Master, Elo" },
-  { value: "boleto", label: "Boleto Bancário", icon: FileText, description: "Vencimento em 3 dias" },
-  { value: "payroll", label: "Folha de Pagamento", icon: Wallet, description: "Exclusivo aposentados BB" },
+  { value: "boleto", label: "Boleto Bancário", icon: FileText, description: "Vencimento em 3 dias úteis" },
 ];
 
 const brazilianStates = [
@@ -82,6 +81,7 @@ export function DonationSection() {
   } = useDonation();
 
   const pix = usePixPayment();
+  const boletoHook = useBoletoPayment();
 
   const [customAmount, setCustomAmount] = useState("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
@@ -135,12 +135,40 @@ export function DonationSection() {
     });
   };
 
+  const handleBoletoDonation = async () => {
+    const ageErr = validateAge(formData.birthDate || "");
+    if (ageErr) {
+      setAgeError(ageErr);
+      toast({ title: "Erro de validação", description: ageErr, variant: "destructive" });
+      return;
+    }
+    setAgeError(null);
+
+    await boletoHook.generateBoleto({
+      valor: selectedAmount,
+      pagador: {
+        nome: formData.fullName || "",
+        cpf: formData.cpfCnpj || "",
+        endereco: {
+          cep: formData.cep || "",
+          address: formData.address || "",
+          number: formData.number || "",
+          complement: formData.complement,
+          neighborhood: formData.neighborhood || "",
+          city: formData.city || "",
+          state: formData.state || "",
+        },
+      },
+    });
+  };
+
   const handleCepBlur = (cep: string) => fetchAddressByCep(cep);
   const handleNext = () => { if (wizardStep < totalSteps) setWizardStep(wizardStep + 1); };
   const handleBack = () => { if (wizardStep > 1) setWizardStep(wizardStep - 1); };
 
   const handleFullReset = () => {
     pix.reset();
+    boletoHook.reset();
     setWizardStep(1);
     resetForm();
     setAgeError(null);
@@ -301,6 +329,98 @@ export function DonationSection() {
               <p className="text-muted-foreground">{pix.error || "Houve um problema ao gerar o código PIX."}</p>
               <div className="pt-4 space-y-3">
                 <Button className="w-full" onClick={handlePixDonation}>Tentar Novamente</Button>
+                <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>Cancelar</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  // --- Boleto Ready Screen ---
+  if (boletoHook.status === "ready" && boletoHook.boleto) {
+    const b = boletoHook.boleto;
+    const dueDateFormatted = new Date(b.dueDate + "T00:00:00").toLocaleDateString("pt-BR");
+    return (
+      <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto shadow-strong">
+            <CardContent className="pt-8 pb-8 space-y-6">
+              <div className="text-center space-y-2">
+                <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                  <FileText className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold text-foreground">Boleto Gerado!</h2>
+                <p className="text-muted-foreground">
+                  Pague até <strong>{dueDateFormatted}</strong> o valor de{" "}
+                  <strong>{b.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</strong>
+                </p>
+              </div>
+
+              {b.linhaDigitavel && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Linha Digitável</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={b.linhaDigitavel}
+                      readOnly
+                      className="text-xs font-mono"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
+                    <Button variant="outline" size="icon" onClick={boletoHook.copyLinhaDigitavel} className="shrink-0">
+                      {boletoHook.copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {b.codigoBarras && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Código de Barras</Label>
+                  <Input value={b.codigoBarras} readOnly className="text-xs font-mono" />
+                </div>
+              )}
+
+              {b.pdfUrl && (
+                <Button className="w-full" size="lg" asChild>
+                  <a href={b.pdfUrl} target="_blank" rel="noopener noreferrer">
+                    <FileText className="w-5 h-5 mr-2" /> Visualizar / Baixar PDF
+                  </a>
+                </Button>
+              )}
+
+              <p className="text-xs text-center text-muted-foreground">
+                Nosso Número: {b.nossoNumero}
+              </p>
+
+              <Button variant="outline" className="w-full" onClick={() => window.location.href = "/"}>
+                Voltar ao Início
+              </Button>
+              <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>
+                Fazer Nova Doação
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  // --- Boleto Error Screen ---
+  if (boletoHook.status === "error") {
+    return (
+      <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto shadow-strong">
+            <CardContent className="pt-12 pb-8 space-y-6 text-center">
+              <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="w-10 h-10 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Erro ao Gerar Boleto</h2>
+              <p className="text-muted-foreground">{boletoHook.error || "Houve um problema ao gerar o boleto."}</p>
+              <div className="pt-4 space-y-3">
+                <Button className="w-full" onClick={handleBoletoDonation}>Tentar Novamente</Button>
                 <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>Cancelar</Button>
               </div>
             </CardContent>
@@ -499,23 +619,6 @@ export function DonationSection() {
                     <p className="text-xs text-muted-foreground flex items-center gap-1">🔒 Seus dados são criptografados e não armazenados localmente</p>
                   </div>
                 )}
-
-                {/* BB debit fields inline */}
-                {paymentMethod === "debit_bb" && (
-                  <div className="mt-4 p-4 bg-muted/30 rounded-xl space-y-4 animate-in slide-in-from-top-2">
-                    <h4 className="font-medium text-foreground flex items-center gap-2"><Building2 className="w-4 h-4" /> Dados Bancários - Banco do Brasil</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="bankAgency">Agência</Label>
-                        <Input id="bankAgency" placeholder="0000-0" value={formData.bankAgency || ""} onChange={(e) => updateFormData({ bankAgency: e.target.value.replace(/\D/g, "").slice(0, 5) })} />
-                      </div>
-                      <div>
-                        <Label htmlFor="bankAccount">Conta Corrente</Label>
-                        <Input id="bankAccount" placeholder="00000-0" value={formData.bankAccount || ""} onChange={(e) => updateFormData({ bankAccount: e.target.value.replace(/\D/g, "").slice(0, 8) })} />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
@@ -604,20 +707,32 @@ export function DonationSection() {
                 <Button
                   size="lg"
                   className="bg-destructive hover:bg-destructive/90 text-destructive-foreground text-base md:text-lg px-6 py-5"
-                  onClick={isPix ? handlePixDonation : submitDonation}
-                  disabled={(isSubmitting || pix.status === "loading") || !canAdvance()}
+                  onClick={
+                    isPix
+                      ? handlePixDonation
+                      : paymentMethod === "boleto"
+                        ? handleBoletoDonation
+                        : submitDonation
+                  }
+                  disabled={(isSubmitting || pix.status === "loading" || boletoHook.status === "loading") || !canAdvance()}
                 >
-                  {(isSubmitting || pix.status === "loading") ? (
+                  {(isSubmitting || pix.status === "loading" || boletoHook.status === "loading") ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      {pix.status === "loading" ? "Gerando PIX..." : "Processando..."}
+                      {pix.status === "loading"
+                        ? "Gerando PIX..."
+                        : boletoHook.status === "loading"
+                          ? "Gerando Boleto..."
+                          : "Processando..."}
                     </>
                   ) : (
                     <>
                       <Heart className="w-5 h-5 mr-2" />
                       {isPix
                         ? `Gerar PIX de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
-                        : `Enviar Doação de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}${isRecurring ? "/mês" : ""}`
+                        : paymentMethod === "boleto"
+                          ? `Gerar Boleto de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
+                          : `Enviar Doação de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}${isRecurring ? "/mês" : ""}`
                       }
                     </>
                   )}
