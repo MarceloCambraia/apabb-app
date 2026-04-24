@@ -100,12 +100,18 @@ export function DonationSection() {
   }, [customAmount, useCustomAmount, setAmount]);
 
   const isPix = paymentMethod === "pix";
-  const totalSteps = isPix ? 3 : 4;
+  const isCard = paymentMethod === "credit_card";
+  const isBoleto = paymentMethod === "boleto";
+  // Only Boleto requires the Address step
+  const totalSteps = isBoleto ? 4 : 3;
   const progressPercent = (wizardStep / totalSteps) * 100;
 
   const isStep1Valid = selectedAmount > 0;
   const isStep2Valid = !!paymentMethod;
-  const isStep3Valid = !!(formData.fullName && formData.cpfCnpj && formData.birthDate);
+  // Card requires only name + CPF; PIX and Boleto also need birthDate
+  const isStep3Valid = isCard
+    ? !!(formData.fullName && formData.cpfCnpj)
+    : !!(formData.fullName && formData.cpfCnpj && formData.birthDate);
   const isStep4Valid = !!(formData.cep && formData.address && formData.number && formData.neighborhood && formData.city && formData.state);
 
   const canAdvance = () => {
@@ -165,12 +171,6 @@ export function DonationSection() {
   };
 
   const handleCardDonation = async () => {
-    const ageErr = validateAge(formData.birthDate || "");
-    if (ageErr) {
-      setAgeError(ageErr);
-      toast({ title: "Erro de validação", description: ageErr, variant: "destructive" });
-      return;
-    }
     setAgeError(null);
 
     const month = formData.cardExpiryMonth || "";
@@ -191,7 +191,6 @@ export function DonationSection() {
       pagador: {
         nome: formData.fullName || "",
         cpf: formData.cpfCnpj || "",
-        email: user?.email,
       },
     });
   };
@@ -210,7 +209,8 @@ export function DonationSection() {
   };
 
   const isFinalStep = wizardStep === totalSteps;
-  const isFinalPixStep = isPix && wizardStep === 3;
+  // PIX and Card both finish at step 3 (no Address step)
+  const isFinalShortStep = (isPix || isCard) && wizardStep === 3;
 
   // --- PIX Paid Screen ---
   if (pix.status === "paid") {
@@ -739,18 +739,20 @@ export function DonationSection() {
                     <Input id="cpfCnpj" placeholder="000.000.000-00" value={formData.cpfCnpj || ""} onChange={(e) => updateFormData({ cpfCnpj: formatCpfCnpj(e.target.value) })} maxLength={18} className={errors.cpfCnpj ? "border-destructive" : ""} />
                     {errors.cpfCnpj && <p className="text-sm text-destructive mt-1">{errors.cpfCnpj}</p>}
                   </div>
-                  <div>
-                    <Label htmlFor="birthDate" className="flex items-center gap-2"><Calendar className="w-4 h-4" /> Data de Nascimento</Label>
-                    <Input id="birthDate" type="date" value={formData.birthDate || ""} onChange={(e) => { updateFormData({ birthDate: e.target.value }); setAgeError(null); }} className={errors.birthDate || ageError ? "border-destructive" : ""} />
-                    {errors.birthDate && <p className="text-sm text-destructive mt-1">{errors.birthDate}</p>}
-                    {ageError && <p className="text-sm text-destructive mt-1">{ageError}</p>}
-                  </div>
+                  {!isCard && (
+                    <div>
+                      <Label htmlFor="birthDate" className="flex items-center gap-2"><Calendar className="w-4 h-4" /> Data de Nascimento</Label>
+                      <Input id="birthDate" type="date" value={formData.birthDate || ""} onChange={(e) => { updateFormData({ birthDate: e.target.value }); setAgeError(null); }} className={errors.birthDate || ageError ? "border-destructive" : ""} />
+                      {errors.birthDate && <p className="text-sm text-destructive mt-1">{errors.birthDate}</p>}
+                      {ageError && <p className="text-sm text-destructive mt-1">{ageError}</p>}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Step 4: Endereço (only for non-PIX) */}
-            {wizardStep === 4 && !isPix && (
+            {wizardStep === 4 && isBoleto && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <h3 className="text-lg font-semibold text-foreground">Endereço</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -805,7 +807,7 @@ export function DonationSection() {
                 <div />
               )}
 
-              {isFinalStep || isFinalPixStep ? (
+              {isFinalStep || isFinalShortStep ? (
                 <Button
                   size="lg"
                   className="bg-destructive hover:bg-destructive/90 text-destructive-foreground text-base md:text-lg px-6 py-5"
