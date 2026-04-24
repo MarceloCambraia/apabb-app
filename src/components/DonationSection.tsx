@@ -164,6 +164,38 @@ export function DonationSection() {
     });
   };
 
+  const handleCardDonation = async () => {
+    const ageErr = validateAge(formData.birthDate || "");
+    if (ageErr) {
+      setAgeError(ageErr);
+      toast({ title: "Erro de validação", description: ageErr, variant: "destructive" });
+      return;
+    }
+    setAgeError(null);
+
+    const month = formData.cardExpiryMonth || "";
+    const year = formData.cardExpiryYear || "";
+    if (!formData.cardNumber || !formData.cardCvv || !month || !year || !formData.cardName) {
+      toast({ title: "Dados do cartão incompletos", description: "Preencha todos os campos do cartão.", variant: "destructive" });
+      return;
+    }
+
+    await card.processPayment({
+      valor: selectedAmount,
+      cartao: {
+        numero: formData.cardNumber,
+        validade: `${month}/${year}`,
+        cvv: formData.cardCvv,
+        nome: formData.cardName,
+      },
+      pagador: {
+        nome: formData.fullName || "",
+        cpf: formData.cpfCnpj || "",
+        email: user?.email,
+      },
+    });
+  };
+
   const handleCepBlur = (cep: string) => fetchAddressByCep(cep);
   const handleNext = () => { if (wizardStep < totalSteps) setWizardStep(wizardStep + 1); };
   const handleBack = () => { if (wizardStep > 1) setWizardStep(wizardStep - 1); };
@@ -171,6 +203,7 @@ export function DonationSection() {
   const handleFullReset = () => {
     pix.reset();
     boletoHook.reset();
+    card.reset();
     setWizardStep(1);
     resetForm();
     setAgeError(null);
