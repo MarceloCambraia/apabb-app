@@ -24,6 +24,7 @@ import {
 } from "@/hooks/useDonation";
 import { usePixPayment } from "@/hooks/usePixPayment";
 import { useBoletoPayment } from "@/hooks/useBoletoPayment";
+import { useCardPayment } from "@/hooks/useCardPayment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const donationAmounts = [
