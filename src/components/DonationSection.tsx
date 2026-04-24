@@ -739,12 +739,14 @@ export function DonationSection() {
                     <Input id="cpfCnpj" placeholder="000.000.000-00" value={formData.cpfCnpj || ""} onChange={(e) => updateFormData({ cpfCnpj: formatCpfCnpj(e.target.value) })} maxLength={18} className={errors.cpfCnpj ? "border-destructive" : ""} />
                     {errors.cpfCnpj && <p className="text-sm text-destructive mt-1">{errors.cpfCnpj}</p>}
                   </div>
-                  <div>
-                    <Label htmlFor="birthDate" className="flex items-center gap-2"><Calendar className="w-4 h-4" /> Data de Nascimento</Label>
-                    <Input id="birthDate" type="date" value={formData.birthDate || ""} onChange={(e) => { updateFormData({ birthDate: e.target.value }); setAgeError(null); }} className={errors.birthDate || ageError ? "border-destructive" : ""} />
-                    {errors.birthDate && <p className="text-sm text-destructive mt-1">{errors.birthDate}</p>}
-                    {ageError && <p className="text-sm text-destructive mt-1">{ageError}</p>}
-                  </div>
+                  {!isCard && (
+                    <div>
+                      <Label htmlFor="birthDate" className="flex items-center gap-2"><Calendar className="w-4 h-4" /> Data de Nascimento</Label>
+                      <Input id="birthDate" type="date" value={formData.birthDate || ""} onChange={(e) => { updateFormData({ birthDate: e.target.value }); setAgeError(null); }} className={errors.birthDate || ageError ? "border-destructive" : ""} />
+                      {errors.birthDate && <p className="text-sm text-destructive mt-1">{errors.birthDate}</p>}
+                      {ageError && <p className="text-sm text-destructive mt-1">{ageError}</p>}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
