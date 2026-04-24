@@ -147,7 +147,6 @@ serve(async (req) => {
         nome: pagador.nome.substring(0, 60),
         tipoInscricao: cpfClean.length === 11 ? 1 : 2,
         numeroInscricao: cpfClean,
-        email: pagador.email || undefined,
       },
     };
 
