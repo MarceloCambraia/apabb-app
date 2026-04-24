@@ -805,7 +805,7 @@ export function DonationSection() {
                 <div />
               )}
 
-              {isFinalStep || isFinalPixStep ? (
+              {isFinalStep || isFinalShortStep ? (
                 <Button
                   size="lg"
                   className="bg-destructive hover:bg-destructive/90 text-destructive-foreground text-base md:text-lg px-6 py-5"
