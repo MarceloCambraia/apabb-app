@@ -24,6 +24,7 @@ import {
 } from "@/hooks/useDonation";
 import { usePixPayment } from "@/hooks/usePixPayment";
 import { useBoletoPayment } from "@/hooks/useBoletoPayment";
+import { useCardPayment } from "@/hooks/useCardPayment";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const donationAmounts = [
@@ -82,6 +83,7 @@ export function DonationSection() {
 
   const pix = usePixPayment();
   const boletoHook = useBoletoPayment();
+  const card = useCardPayment();
 
   const [customAmount, setCustomAmount] = useState("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
@@ -162,6 +164,38 @@ export function DonationSection() {
     });
   };
 
+  const handleCardDonation = async () => {
+    const ageErr = validateAge(formData.birthDate || "");
+    if (ageErr) {
+      setAgeError(ageErr);
+      toast({ title: "Erro de validação", description: ageErr, variant: "destructive" });
+      return;
+    }
+    setAgeError(null);
+
+    const month = formData.cardExpiryMonth || "";
+    const year = formData.cardExpiryYear || "";
+    if (!formData.cardNumber || !formData.cardCvv || !month || !year || !formData.cardName) {
+      toast({ title: "Dados do cartão incompletos", description: "Preencha todos os campos do cartão.", variant: "destructive" });
+      return;
+    }
+
+    await card.processPayment({
+      valor: selectedAmount,
+      cartao: {
+        numero: formData.cardNumber,
+        validade: `${month}/${year}`,
+        cvv: formData.cardCvv,
+        nome: formData.cardName,
+      },
+      pagador: {
+        nome: formData.fullName || "",
+        cpf: formData.cpfCnpj || "",
+        email: user?.email,
+      },
+    });
+  };
+
   const handleCepBlur = (cep: string) => fetchAddressByCep(cep);
   const handleNext = () => { if (wizardStep < totalSteps) setWizardStep(wizardStep + 1); };
   const handleBack = () => { if (wizardStep > 1) setWizardStep(wizardStep - 1); };
@@ -169,6 +203,7 @@ export function DonationSection() {
   const handleFullReset = () => {
     pix.reset();
     boletoHook.reset();
+    card.reset();
     setWizardStep(1);
     resetForm();
     setAgeError(null);
@@ -421,6 +456,73 @@ export function DonationSection() {
               <p className="text-muted-foreground">{boletoHook.error || "Houve um problema ao gerar o boleto."}</p>
               <div className="pt-4 space-y-3">
                 <Button className="w-full" onClick={handleBoletoDonation}>Tentar Novamente</Button>
+                <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>Cancelar</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  // --- Card Approved Screen ---
+  if (card.status === "approved" && card.result) {
+    return (
+      <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto shadow-strong">
+            <CardContent className="pt-12 pb-8 space-y-6 text-center">
+              <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center animate-in zoom-in duration-500">
+                <CheckCircle2 className="w-14 h-14 text-primary" />
+              </div>
+              <h2 className="text-3xl font-bold text-foreground">Pagamento Aprovado!</h2>
+              <p className="text-lg text-muted-foreground max-w-sm mx-auto">
+                Doação de{" "}
+                <strong className="text-foreground">
+                  {card.result.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </strong>{" "}
+                processada com sucesso.
+              </p>
+              {card.result.authorizationCode && (
+                <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                  <p className="text-muted-foreground">Código de Autorização</p>
+                  <p className="font-mono font-semibold text-foreground break-all">{card.result.authorizationCode}</p>
+                </div>
+              )}
+              <p className="text-sm text-muted-foreground">
+                {card.result.cardBrand} •••• {card.result.cardLastFour}
+              </p>
+              <div className="pt-4 space-y-3">
+                <Button className="w-full" size="lg" onClick={() => window.location.href = "/"}>
+                  Voltar ao Início
+                </Button>
+                <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>
+                  Fazer Nova Doação
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
+  // --- Card Declined / Error Screen ---
+  if (card.status === "declined" || card.status === "error") {
+    return (
+      <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-lg mx-auto shadow-strong">
+            <CardContent className="pt-12 pb-8 space-y-6 text-center">
+              <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="w-10 h-10 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Pagamento não aprovado</h2>
+              <p className="text-muted-foreground">
+                {card.error || card.result?.message || "Não foi possível processar o pagamento. Verifique os dados do cartão e tente novamente."}
+              </p>
+              <div className="pt-4 space-y-3">
+                <Button className="w-full" onClick={() => card.reset()}>Tentar Novamente</Button>
                 <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>Cancelar</Button>
               </div>
             </CardContent>
@@ -712,18 +814,22 @@ export function DonationSection() {
                       ? handlePixDonation
                       : paymentMethod === "boleto"
                         ? handleBoletoDonation
-                        : submitDonation
+                        : paymentMethod === "credit_card"
+                          ? handleCardDonation
+                          : submitDonation
                   }
-                  disabled={(isSubmitting || pix.status === "loading" || boletoHook.status === "loading") || !canAdvance()}
+                  disabled={(isSubmitting || pix.status === "loading" || boletoHook.status === "loading" || card.status === "loading") || !canAdvance()}
                 >
-                  {(isSubmitting || pix.status === "loading" || boletoHook.status === "loading") ? (
+                  {(isSubmitting || pix.status === "loading" || boletoHook.status === "loading" || card.status === "loading") ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                       {pix.status === "loading"
                         ? "Gerando PIX..."
                         : boletoHook.status === "loading"
                           ? "Gerando Boleto..."
-                          : "Processando..."}
+                          : card.status === "loading"
+                            ? "Processando pagamento..."
+                            : "Processando..."}
                     </>
                   ) : (
                     <>
@@ -732,7 +838,9 @@ export function DonationSection() {
                         ? `Gerar PIX de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
                         : paymentMethod === "boleto"
                           ? `Gerar Boleto de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
-                          : `Enviar Doação de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}${isRecurring ? "/mês" : ""}`
+                          : paymentMethod === "credit_card"
+                            ? `Pagar ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} no Cartão`
+                            : `Enviar Doação de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}${isRecurring ? "/mês" : ""}`
                       }
                     </>
                   )}
