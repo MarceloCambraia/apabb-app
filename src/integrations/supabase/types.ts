@@ -137,6 +137,57 @@ export type Database = {
         }
         Relationships: []
       }
+      card_payments: {
+        Row: {
+          amount: number
+          authorization_code: string | null
+          bb_response: Json | null
+          card_brand: string | null
+          card_last_four: string
+          created_at: string
+          error_message: string | null
+          id: string
+          pagador_cpf: string
+          pagador_email: string | null
+          pagador_nome: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          authorization_code?: string | null
+          bb_response?: Json | null
+          card_brand?: string | null
+          card_last_four: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          pagador_cpf: string
+          pagador_email?: string | null
+          pagador_nome: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          authorization_code?: string | null
+          bb_response?: Json | null
+          card_brand?: string | null
+          card_last_four?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          pagador_cpf?: string
+          pagador_email?: string | null
+          pagador_nome?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       donations: {
         Row: {
           amount: number
