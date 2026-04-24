@@ -121,7 +121,6 @@ serve(async (req) => {
         card_brand: brand,
         pagador_nome: pagador.nome,
         pagador_cpf: cpfClean,
-        pagador_email: pagador.email || null,
       })
       .select()
       .single();
