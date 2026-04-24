@@ -121,7 +121,6 @@ serve(async (req) => {
         card_brand: brand,
         pagador_nome: pagador.nome,
         pagador_cpf: cpfClean,
-        pagador_email: pagador.email || null,
       })
       .select()
       .single();
@@ -147,7 +146,6 @@ serve(async (req) => {
         nome: pagador.nome.substring(0, 60),
         tipoInscricao: cpfClean.length === 11 ? 1 : 2,
         numeroInscricao: cpfClean,
-        email: pagador.email || undefined,
       },
     };
 
