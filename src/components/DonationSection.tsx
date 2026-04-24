@@ -209,7 +209,8 @@ export function DonationSection() {
   };
 
   const isFinalStep = wizardStep === totalSteps;
-  const isFinalPixStep = isPix && wizardStep === 3;
+  // PIX and Card both finish at step 3 (no Address step)
+  const isFinalShortStep = (isPix || isCard) && wizardStep === 3;
 
   // --- PIX Paid Screen ---
   if (pix.status === "paid") {
