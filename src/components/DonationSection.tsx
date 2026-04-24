@@ -83,6 +83,7 @@ export function DonationSection() {
 
   const pix = usePixPayment();
   const boletoHook = useBoletoPayment();
+  const card = useCardPayment();
 
   const [customAmount, setCustomAmount] = useState("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
