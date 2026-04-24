@@ -814,18 +814,22 @@ export function DonationSection() {
                       ? handlePixDonation
                       : paymentMethod === "boleto"
                         ? handleBoletoDonation
-                        : submitDonation
+                        : paymentMethod === "credit_card"
+                          ? handleCardDonation
+                          : submitDonation
                   }
-                  disabled={(isSubmitting || pix.status === "loading" || boletoHook.status === "loading") || !canAdvance()}
+                  disabled={(isSubmitting || pix.status === "loading" || boletoHook.status === "loading" || card.status === "loading") || !canAdvance()}
                 >
-                  {(isSubmitting || pix.status === "loading" || boletoHook.status === "loading") ? (
+                  {(isSubmitting || pix.status === "loading" || boletoHook.status === "loading" || card.status === "loading") ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                       {pix.status === "loading"
                         ? "Gerando PIX..."
                         : boletoHook.status === "loading"
                           ? "Gerando Boleto..."
-                          : "Processando..."}
+                          : card.status === "loading"
+                            ? "Processando pagamento..."
+                            : "Processando..."}
                     </>
                   ) : (
                     <>
@@ -834,7 +838,9 @@ export function DonationSection() {
                         ? `Gerar PIX de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
                         : paymentMethod === "boleto"
                           ? `Gerar Boleto de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
-                          : `Enviar Doação de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}${isRecurring ? "/mês" : ""}`
+                          : paymentMethod === "credit_card"
+                            ? `Pagar ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} no Cartão`
+                            : `Enviar Doação de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}${isRecurring ? "/mês" : ""}`
                       }
                     </>
                   )}
