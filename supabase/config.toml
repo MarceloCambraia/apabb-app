@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.gerar-boleto-bb]
 verify_jwt = false
+
+[functions.processar-cartao-bb]
+verify_jwt = false
