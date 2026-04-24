@@ -752,7 +752,7 @@ export function DonationSection() {
             )}
 
             {/* Step 4: Endereço (only for non-PIX) */}
-            {wizardStep === 4 && !isPix && (
+            {wizardStep === 4 && isBoleto && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <h3 className="text-lg font-semibold text-foreground">Endereço</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
