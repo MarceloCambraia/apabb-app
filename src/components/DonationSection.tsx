@@ -100,12 +100,18 @@ export function DonationSection() {
   }, [customAmount, useCustomAmount, setAmount]);
 
   const isPix = paymentMethod === "pix";
-  const totalSteps = isPix ? 3 : 4;
+  const isCard = paymentMethod === "credit_card";
+  const isBoleto = paymentMethod === "boleto";
+  // Only Boleto requires the Address step
+  const totalSteps = isBoleto ? 4 : 3;
   const progressPercent = (wizardStep / totalSteps) * 100;
 
   const isStep1Valid = selectedAmount > 0;
   const isStep2Valid = !!paymentMethod;
-  const isStep3Valid = !!(formData.fullName && formData.cpfCnpj && formData.birthDate);
+  // Card requires only name + CPF; PIX and Boleto also need birthDate
+  const isStep3Valid = isCard
+    ? !!(formData.fullName && formData.cpfCnpj)
+    : !!(formData.fullName && formData.cpfCnpj && formData.birthDate);
   const isStep4Valid = !!(formData.cep && formData.address && formData.number && formData.neighborhood && formData.city && formData.state);
 
   const canAdvance = () => {
