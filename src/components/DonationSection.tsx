@@ -171,12 +171,6 @@ export function DonationSection() {
   };
 
   const handleCardDonation = async () => {
-    const ageErr = validateAge(formData.birthDate || "");
-    if (ageErr) {
-      setAgeError(ageErr);
-      toast({ title: "Erro de validação", description: ageErr, variant: "destructive" });
-      return;
-    }
     setAgeError(null);
 
     const month = formData.cardExpiryMonth || "";
@@ -197,7 +191,6 @@ export function DonationSection() {
       pagador: {
         nome: formData.fullName || "",
         cpf: formData.cpfCnpj || "",
-        email: user?.email,
       },
     });
   };
