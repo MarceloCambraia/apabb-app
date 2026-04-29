@@ -42,7 +42,7 @@ serve(async (req) => {
     // OAuth token (with cache)
     const now = Date.now();
     if (!tokenCache || now >= tokenCache.expiresAt - 120000) {
-      const bbRes = await fetch("https://oauth.hm.bb.com.br/oauth/token", {
+      const bbRes = await fetch("https://oauth.bb.com.br/oauth/token", {
         method: "POST",
         headers: {
           Authorization: `Basic ${Deno.env.get("BB_BASIC_AUTH")}`,
@@ -59,7 +59,7 @@ serve(async (req) => {
 
     // Criar cobrança PIX
     const pixRes = await fetch(
-      `https://api.hm.bb.com.br/pix/v2/cob/${txid}?gw-dev-app-key=${Deno.env.get("BB_APP_KEY")}`,
+      `https://api.bb.com.br/pix/v2/cob/${txid}?gw-app-key=${Deno.env.get("BB_APP_KEY")}`,
       {
         method: "PUT",
         headers: {
@@ -84,7 +84,7 @@ serve(async (req) => {
     if (pixData.loc?.location) {
       try {
         const qrRes = await fetch(
-          `${pixData.loc.location}?gw-dev-app-key=${Deno.env.get("BB_APP_KEY")}`,
+          `${pixData.loc.location}?gw-app-key=${Deno.env.get("BB_APP_KEY")}`,
           {
             headers: {
               Authorization: `Bearer ${tokenCache.accessToken}`,
