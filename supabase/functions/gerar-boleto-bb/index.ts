@@ -14,7 +14,7 @@ async function getAccessToken(): Promise<string> {
     return tokenCache.accessToken;
   }
 
-  const res = await fetch("https://oauth.hm.bb.com.br/oauth/token", {
+  const res = await fetch("https://oauth.bb.com.br/oauth/token", {
     method: "POST",
     headers: {
       Authorization: `Basic ${Deno.env.get("BB_BASIC_AUTH")}`,
@@ -172,7 +172,7 @@ serve(async (req) => {
     };
 
     const bbRes = await fetch(
-      `https://api.hm.bb.com.br/cobrancas/v2/boletos?gw-dev-app-key=${appKey}`,
+      `https://api.bb.com.br/cobrancas/v2/boletos?gw-app-key=${appKey}`,
       {
         method: "POST",
         headers: {
