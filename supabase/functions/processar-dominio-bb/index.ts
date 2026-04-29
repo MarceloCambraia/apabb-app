@@ -59,7 +59,7 @@ serve(async (req) => {
 
     // Criar cobrança PIX
     const pixRes = await fetch(
-      `https://api.bb.com.br/pix/v2/cob/${txid}?gw-app-key=${Deno.env.get("BB_APP_KEY")}`,
+      `https://api-pix.bb.com.br/pix/v2/cob/${txid}?gw-app-key=${Deno.env.get("BB_APP_KEY")}`,
       {
         method: "PUT",
         headers: {
