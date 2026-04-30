@@ -173,13 +173,14 @@ serve(async (req) => {
     };
 
     const bbRes = await fetch(
-      `https://api.bb.com.br/cobrancas/v2/boletos?gw-app-key=${appKey}`,
+      `https://bb-mtls-proxy-production.up.railway.app/cobrancas/v2/boletos?gw-app-key=${appKey}`,
       {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
           Accept: "application/json",
+          "x-proxy-secret": Deno.env.get("PROXY_SECRET") ?? "",
         },
         body: JSON.stringify(bbBody),
       }
