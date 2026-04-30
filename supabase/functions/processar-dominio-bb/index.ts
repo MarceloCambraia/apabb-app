@@ -60,13 +60,14 @@ serve(async (req) => {
 
     // Criar cobrança PIX
     const pixRes = await fetch(
-      `https://api-pix.bb.com.br/pix/v2/cob/${txid}?gw-app-key=${Deno.env.get("BB_APP_KEY")}`,
+      `https://bb-mtls-proxy-production.up.railway.app/pix/v2/cob/${txid}?gw-app-key=${Deno.env.get("BB_APP_KEY")}`,
       {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${tokenCache.accessToken}`,
           "Content-Type": "application/json",
           Accept: "application/json",
+          "x-proxy-secret": Deno.env.get("PROXY_SECRET") ?? "",
         },
         body: JSON.stringify({
           calendario: { expiracao: 3600 },
