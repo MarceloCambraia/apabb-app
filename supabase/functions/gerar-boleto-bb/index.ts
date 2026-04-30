@@ -14,11 +14,12 @@ async function getAccessToken(): Promise<string> {
     return tokenCache.accessToken;
   }
 
-  const res = await fetch("https://oauth.bb.com.br/oauth/token", {
+  const res = await fetch("https://bb-mtls-proxy-production.up.railway.app/oauth/token", {
     method: "POST",
     headers: {
       Authorization: `Basic ${Deno.env.get("BB_BASIC_AUTH")}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "x-proxy-secret": Deno.env.get("PROXY_SECRET") ?? "",
     },
     body: "grant_type=client_credentials&scope=cobrancas.boletos-info cobrancas.boletos-requisicao",
   });
