@@ -42,11 +42,12 @@ serve(async (req) => {
     // OAuth token (with cache)
     const now = Date.now();
     if (!tokenCache || now >= tokenCache.expiresAt - 120000) {
-      const bbRes = await fetch("https://oauth.bb.com.br/oauth/token", {
+      const bbRes = await fetch("https://bb-mtls-proxy-production.up.railway.app/oauth/token", {
         method: "POST",
         headers: {
           Authorization: `Basic ${Deno.env.get("BB_BASIC_AUTH")}`,
           "Content-Type": "application/x-www-form-urlencoded",
+          "x-proxy-secret": Deno.env.get("PROXY_SECRET") ?? "",
         },
         body: "grant_type=client_credentials",
       });
