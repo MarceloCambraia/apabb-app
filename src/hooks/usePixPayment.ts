@@ -9,7 +9,7 @@ interface PixPaymentData {
   txid: string;
 }
 
-const PIX_EXPIRATION_MS = 60 * 60 * 1000; // 60 minutes
+const PIX_EXPIRATION_MS = 10 * 60 * 1000; // 10 minutes
 const POLLING_INTERVAL_MS = 5000; // 5 seconds
 
 export function usePixPayment() {

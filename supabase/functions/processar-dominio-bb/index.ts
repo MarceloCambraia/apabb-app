@@ -35,7 +35,7 @@ serve(async (req) => {
       txid,
       user_id: user.id,
       amount: body.valor,
-      expires_at: new Date(Date.now() + 3600000).toISOString(),
+      expires_at: new Date(Date.now() + 600000).toISOString(),
     });
     if (dbErr) throw new Error(`DB Intent Error: ${JSON.stringify(dbErr)}`);
 
@@ -70,7 +70,7 @@ serve(async (req) => {
           "x-proxy-secret": Deno.env.get("PROXY_SECRET") ?? "",
         },
         body: JSON.stringify({
-          calendario: { expiracao: 3600 },
+          calendario: { expiracao: 600 },
           valor: { original: Number(body.valor).toFixed(2) },
           chave: Deno.env.get("BB_CHAVE_PIX_DESTINO"),
           solicitacaoPagador: "Doação APABB",
