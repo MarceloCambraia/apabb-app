@@ -17,6 +17,13 @@ import Transparencia from "./pages/Transparencia";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import DocumentoVisao from "./pages/DocumentoVisao";
+import { RequireVolunteerAdmin } from "@/components/admin/RequireVolunteerAdmin";
+import { VolunteerAdminLayout } from "@/components/admin/VolunteerAdminLayout";
+import VoluntariosDashboard from "./pages/admin/VoluntariosDashboard";
+import VoluntariosCadastros from "./pages/admin/VoluntariosCadastros";
+import VoluntariosOportunidades from "./pages/admin/VoluntariosOportunidades";
+import VoluntariosProjetos from "./pages/admin/VoluntariosProjetos";
+import VoluntariosCoordenadores from "./pages/admin/VoluntariosCoordenadores";
 
 const queryClient = new QueryClient();
 
