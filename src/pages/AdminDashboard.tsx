@@ -287,11 +287,19 @@ export default function AdminDashboard() {
       <Header />
       
       <main className="container mx-auto px-4 md:px-6 py-6 md:py-12 flex-1">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-4xl font-bold mb-2">Dashboard Administrativo</h1>
-          <p className="text-muted-foreground text-sm md:text-lg">
-            {nucleus && nucleusNames[nucleus]}
-          </p>
+        <div className="mb-6 md:mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl md:text-4xl font-bold mb-2">Dashboard Administrativo</h1>
+            <p className="text-muted-foreground text-sm md:text-lg">
+              {nucleus && nucleusNames[nucleus]}
+            </p>
+          </div>
+          <a
+            href="/admin/voluntarios"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
+          >
+            Gestão de Voluntariado
+          </a>
         </div>
 
         {/* Date Filters */}

@@ -17,6 +17,13 @@ import Transparencia from "./pages/Transparencia";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import DocumentoVisao from "./pages/DocumentoVisao";
+import { RequireVolunteerAdmin } from "@/components/admin/RequireVolunteerAdmin";
+import { VolunteerAdminLayout } from "@/components/admin/VolunteerAdminLayout";
+import VoluntariosDashboard from "./pages/admin/VoluntariosDashboard";
+import VoluntariosCadastros from "./pages/admin/VoluntariosCadastros";
+import VoluntariosOportunidades from "./pages/admin/VoluntariosOportunidades";
+import VoluntariosProjetos from "./pages/admin/VoluntariosProjetos";
+import VoluntariosCoordenadores from "./pages/admin/VoluntariosCoordenadores";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +47,17 @@ const App = () => (
             <Route path="/noticias" element={<Noticias />} />
             <Route path="/transparencia" element={<Transparencia />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route element={<RequireVolunteerAdmin />}>
+              <Route path="/admin/voluntarios" element={<VolunteerAdminLayout />}>
+                <Route index element={<VoluntariosDashboard />} />
+                <Route path="cadastros" element={<VoluntariosCadastros />} />
+                <Route path="oportunidades" element={<VoluntariosOportunidades />} />
+                <Route path="projetos" element={<VoluntariosProjetos />} />
+                <Route element={<RequireVolunteerAdmin adminOnly />}>
+                  <Route path="coordenadores" element={<VoluntariosCoordenadores />} />
+                </Route>
+              </Route>
+            </Route>
             <Route path="/documento-visao" element={<DocumentoVisao />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
