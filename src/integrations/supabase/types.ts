@@ -227,6 +227,42 @@ export type Database = {
         }
         Relationships: []
       }
+      nucleus_coordinators: {
+        Row: {
+          area: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          nucleus: string
+          phone: string | null
+          user_id: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          area?: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          nucleus: string
+          phone?: string | null
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          area?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          nucleus?: string
+          phone?: string | null
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       pix_charges: {
         Row: {
           amount: number
@@ -401,6 +437,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string
+          filled_slots: number
           id: string
           image_url: string | null
           max_slots: number | null
@@ -413,6 +450,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description: string
+          filled_slots?: number
           id?: string
           image_url?: string | null
           max_slots?: number | null
@@ -425,6 +463,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string
+          filled_slots?: number
           id?: string
           image_url?: string | null
           max_slots?: number | null
@@ -478,6 +517,10 @@ export type Database = {
           name: string
           nucleus: string
           phone: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
           updated_at: string
         }
         Insert: {
@@ -489,6 +532,10 @@ export type Database = {
           name: string
           nucleus: string
           phone: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -500,6 +547,10 @@ export type Database = {
           name?: string
           nucleus?: string
           phone?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: []
@@ -522,7 +573,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "coordenador_voluntarios"
       project_status: "ativo" | "encerrado"
     }
     CompositeTypes: {
@@ -651,7 +702,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "coordenador_voluntarios"],
       project_status: ["ativo", "encerrado"],
     },
   },
