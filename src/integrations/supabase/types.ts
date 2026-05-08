@@ -560,6 +560,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_volunteers: {
+        Args: { _nucleus: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -568,6 +572,10 @@ export type Database = {
         Returns: boolean
       }
       is_nucleus_admin: {
+        Args: { _nucleus: string; _user_id: string }
+        Returns: boolean
+      }
+      is_volunteer_coordinator: {
         Args: { _nucleus: string; _user_id: string }
         Returns: boolean
       }
