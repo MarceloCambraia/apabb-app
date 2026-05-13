@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
@@ -294,12 +294,12 @@ export default function AdminDashboard() {
               {nucleus && nucleusNames[nucleus]}
             </p>
           </div>
-          <a
-            href="/admin/voluntarios"
+          <Link
+            to="/admin/voluntarios"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
           >
             Gestão de Voluntariado
-          </a>
+          </Link>
         </div>
 
         {/* Date Filters */}
