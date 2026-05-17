@@ -13,7 +13,7 @@ import { Footer } from "@/components/Footer";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { signUp, signIn, user } = useAuth();
+  const { signUp, signIn, signInWithGoogle, user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -214,6 +214,28 @@ const Auth = () => {
                       <LogIn className="w-4 h-4 mr-2" />
                       {isLoading ? "Entrando..." : "Entrar"}
                     </Button>
+
+                    <div className="relative my-2">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">ou</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={async () => {
+                        const { error } = await signInWithGoogle();
+                        if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
+                      }}
+                    >
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 mr-2" />
+                      Entrar com Google
+                    </Button>
                   </form>
                 </CardContent>
               </Card>
@@ -328,6 +350,28 @@ const Auth = () => {
                     <Button type="submit" variant="hero" className="w-full" disabled={isLoading}>
                       <UserPlus className="w-4 h-4 mr-2" />
                       {isLoading ? "Criando conta..." : "Criar Conta"}
+                    </Button>
+
+                    <div className="relative my-2">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">ou</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={async () => {
+                        const { error } = await signInWithGoogle();
+                        if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
+                      }}
+                    >
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 mr-2" />
+                      Entrar com Google
                     </Button>
                   </form>
                 </CardContent>
