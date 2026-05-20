@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
-        const googleUser = await GoogleAuth.signIn({});
+        const googleUser = await GoogleAuth.signIn({ scopes: ['profile', 'email'] });
         const idToken = googleUser.authentication.idToken;
         const { error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
