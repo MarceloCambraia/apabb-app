@@ -73,14 +73,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const googleUser = await GoogleAuth.signIn();
-      const idToken = googleUser.authentication.idToken;
+      if (Capacitor.isNativePlatform()) {
+        const googleUser = await GoogleAuth.signIn();
+        const idToken = googleUser.authentication.idToken;
+        const { error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: idToken,
+        });
+        return { error };
+      }
 
-      const { error } = await supabase.auth.signInWithIdToken({
+      // Web: use Supabase OAuth redirect flow
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        token: idToken,
+        options: { redirectTo: `${window.location.origin}/` },
       });
-
       return { error };
     } catch (err: any) {
       return { error: err };
