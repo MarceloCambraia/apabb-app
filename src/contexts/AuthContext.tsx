@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { GoogleAuth } from '@southdevs/capacitor-google-auth';
+import { Capacitor } from '@capacitor/core';
 
 interface AuthContextType {
   user: User | null;
