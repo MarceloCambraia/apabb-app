@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, Heart, User, LogOut, Shield } from "lucide-react";
+import { Heart, User, LogOut, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import apabbLogo from "@/assets/apabb-logo.jpg";
 import { useAuth } from "@/contexts/AuthContext";
@@ -97,9 +97,6 @@ export function Header() {
             </Link>
           )}
           
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="w-5 h-5" />
-          </Button>
         </div>
       </div>
     </header>
