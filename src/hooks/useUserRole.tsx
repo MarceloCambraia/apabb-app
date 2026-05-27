@@ -10,6 +10,7 @@ export function useUserRole() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     async function fetchUserRole() {
       if (!user) {
         setIsAdmin(false);
