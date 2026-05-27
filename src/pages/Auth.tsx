@@ -5,17 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, LogIn, UserPlus } from "lucide-react";
+import { Heart, LogIn, UserPlus, Mail } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { signUp, signIn, signInWithGoogle, user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: `${window.location.origin}/redefinir-senha`,
+    });
+    setForgotLoading(false);
+    setForgotSent(true);
+  };
 
   const [loginData, setLoginData] = useState({
     email: "",
@@ -210,6 +226,16 @@ const Auth = () => {
                       />
                     </div>
 
+                    <div className="flex justify-end -mt-2">
+                      <button
+                        type="button"
+                        onClick={() => { setForgotEmail(loginData.email); setForgotSent(false); setForgotOpen(true); }}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Esqueci minha senha
+                      </button>
+                    </div>
+
                     <Button type="submit" variant="hero" className="w-full" disabled={isLoading}>
                       <LogIn className="w-4 h-4 mr-2" />
                       {isLoading ? "Entrando..." : "Entrar"}
@@ -380,6 +406,42 @@ const Auth = () => {
           </Tabs>
         </div>
       </main>
+
+      <Dialog open={forgotOpen} onOpenChange={(o) => { setForgotOpen(o); if (!o) { setForgotSent(false); setForgotEmail(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Recuperar senha</DialogTitle>
+            <DialogDescription>
+              Informe o e-mail cadastrado para receber um link de recuperação.
+            </DialogDescription>
+          </DialogHeader>
+          {forgotSent ? (
+            <div className="py-4 text-sm text-muted-foreground">
+              Se este e-mail estiver cadastrado, você receberá um link para redefinir sua senha.
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <Label htmlFor="forgot-email">E-mail</Label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit" variant="hero" className="w-full" disabled={forgotLoading}>
+                  <Mail className="w-4 h-4 mr-2" />
+                  {forgotLoading ? "Enviando..." : "Enviar link de recuperação"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );
