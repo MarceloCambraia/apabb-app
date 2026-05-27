@@ -11,6 +11,7 @@ import Voluntariado from "./pages/Voluntariado";
 import Associar from "./pages/Associar";
 import Doar from "./pages/Doar";
 import Auth from "./pages/Auth";
+import RedefinirSenha from "./pages/RedefinirSenha";
 import Profile from "./pages/Profile";import ClubeBeneficios from "./pages/ClubeBeneficios";
 import Noticias from "./pages/Noticias";
 import Transparencia from "./pages/Transparencia";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/associar" element={<Associar />} />
             <Route path="/doar" element={<Doar />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/perfil" element={<Profile />} />
             <Route path="/clube-beneficios" element={<ClubeBeneficios />} />
             <Route path="/noticias" element={<Noticias />} />
