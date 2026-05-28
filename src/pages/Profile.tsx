@@ -24,6 +24,13 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface ActiveSubscription {
+  badge_level: string;
+  amount: number;
+  status: string;
+  next_charge_date: string;
+}
+
 interface TierInfo {
   level: number;
   title: string;
@@ -47,6 +54,16 @@ function getTier(totalDonated: number): TierInfo {
   return TIERS[0];
 }
 
+function getTierByBadgeLevel(badgeLevel: string): TierInfo {
+  const map: Record<string, TierInfo> = {
+    anjo: TIERS[3],
+    protetor: TIERS[2],
+    parceiro: TIERS[1],
+    apoiador: TIERS[0],
+  };
+  return map[badgeLevel] ?? TIERS[0];
+}
+
 function getProgressToNext(totalDonated: number): { percent: number; remaining: number; nextTier: TierInfo | null } {
   const currentTier = getTier(totalDonated);
   const nextTierIndex = TIERS.findIndex(t => t.level === currentTier.level + 1);
@@ -67,6 +84,7 @@ export default function Profile() {
   const [profileName, setProfileName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [activeSubscription, setActiveSubscription] = useState<ActiveSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
 
@@ -82,15 +100,17 @@ export default function Profile() {
     if (!user) return;
     setLoading(true);
     try {
-      const [profileRes, donationsRes] = await Promise.all([
+      const [profileRes, donationsRes, subscriptionRes] = await Promise.all([
         supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single(),
         supabase.from('donations').select('id, amount, payment_status, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('subscriptions').select('badge_level, amount, status, next_charge_date').eq('user_id', user.id).eq('status', 'active').maybeSingle(),
       ]);
       if (profileRes.data) {
         setProfileName(profileRes.data.full_name);
         setAvatarUrl(profileRes.data.avatar_url);
       }
       if (donationsRes.data) setDonations(donationsRes.data);
+      if (subscriptionRes.data) setActiveSubscription(subscriptionRes.data);
     } catch (error: any) {
       toast({ title: 'Erro ao carregar dados', description: error.message, variant: 'destructive' });
     } finally {
@@ -163,8 +183,11 @@ export default function Profile() {
     return months.size;
   }, [paidDonations]);
 
-  const currentTier = getTier(totalDonated);
-  const { percent, remaining, nextTier } = getProgressToNext(totalDonated);
+  const currentTier = activeSubscription
+    ? getTierByBadgeLevel(activeSubscription.badge_level)
+    : getTier(totalDonated);
+  const effectiveAmount = activeSubscription ? activeSubscription.amount : totalDonated;
+  const { percent, remaining, nextTier } = getProgressToNext(effectiveAmount);
 
   const formatCurrency = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
@@ -233,16 +256,23 @@ export default function Profile() {
             </button>
           </div>
           <h1 className="text-2xl font-bold text-foreground">{displayName}</h1>
-          <Badge
-            className="text-sm px-4 py-1 font-semibold border-0"
-            style={{ backgroundColor: `${currentTier.color}22`, color: currentTier.color }}
-          >
-            {currentTier.level === 1 && '🛡️'}
-            {currentTier.level === 2 && '⭐'}
-            {currentTier.level === 3 && '👑'}
-            {currentTier.level === 4 && '💎'}
-            {' '}{currentTier.title}
-          </Badge>
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <Badge
+              className="text-sm px-4 py-1 font-semibold border-0"
+              style={{ backgroundColor: `${currentTier.color}22`, color: currentTier.color }}
+            >
+              {currentTier.level === 1 && '🛡️'}
+              {currentTier.level === 2 && '⭐'}
+              {currentTier.level === 3 && '👑'}
+              {currentTier.level === 4 && '💎'}
+              {' '}{currentTier.title}
+            </Badge>
+            {activeSubscription && (
+              <Badge className="text-xs px-3 py-1 font-medium border-0 bg-[#F39C12]/15 text-[#F39C12]">
+                🔄 Recorrente
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Progress Bar */}

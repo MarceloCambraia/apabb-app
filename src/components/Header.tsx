@@ -23,14 +23,24 @@ export function Header() {
     navigate("/");
   };
 
+  const firstName =
+    user?.user_metadata?.full_name?.split(" ")[0] ||
+    user?.user_metadata?.name?.split(" ")[0] ||
+    user?.email?.split("@")[0] ||
+    "";
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
           <img src={apabbLogo} alt="APABB" className="w-10 h-10" />
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold text-primary">APABB</h1>
-            <p className="text-xs text-muted-foreground">Transformando vidas</p>
+            {user ? (
+              <p className="text-xs font-medium text-[#F39C12]">Olá, {firstName}!</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Transformando vidas</p>
+            )}
           </div>
         </Link>
         

@@ -21,13 +21,20 @@ async function getAccessToken(): Promise<string> {
       "Content-Type": "application/x-www-form-urlencoded",
       "x-proxy-secret": Deno.env.get("PROXY_SECRET") ?? "",
     },
-    body: "grant_type=client_credentials&scope=cobrancas.boletos-info cobrancas.boletos-requisicao",
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+    }).toString(),
   });
 
+  const oauthText = await res.text();
+  console.log("OAuth status:", res.status);
+  console.log("OAuth response:", oauthText);
+
   if (!res.ok) {
-    throw new Error(`OAuth Error: ${await res.text()}`);
+    throw new Error(`OAuth Error: ${oauthText}`);
   }
-  const data = await res.json();
+
+  const data = JSON.parse(oauthText);
   tokenCache = {
     accessToken: data.access_token,
     expiresAt: now + data.expires_in * 1000,

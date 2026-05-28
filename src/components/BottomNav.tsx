@@ -26,7 +26,7 @@ export function BottomNav() {
   const items = user ? navItems : guestNavItems;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-background border-t border-border md:hidden"
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-gray-200 md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="flex items-stretch justify-around">
@@ -45,7 +45,7 @@ export function BottomNav() {
               )}
             >
               <Icon
-                className={cn("w-6 h-6", isActive && "stroke-[2.5]")}
+                className={cn("w-5 h-5", isActive && "stroke-[2.5]")}
               />
               <span className="text-[10px] leading-tight">{label}</span>
             </Link>

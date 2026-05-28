@@ -36,6 +36,7 @@ serve(async (req) => {
       user_id: user.id,
       amount: body.valor,
       expires_at: new Date(Date.now() + 600000).toISOString(),
+      is_recurring: body.isRecurring ?? false,
     });
     if (dbErr) throw new Error(`DB Intent Error: ${JSON.stringify(dbErr)}`);
 
