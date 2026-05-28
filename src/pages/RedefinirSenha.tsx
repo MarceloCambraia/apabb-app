@@ -19,9 +19,12 @@ const RedefinirSenha = () => {
   const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
-    // Supabase parses the recovery token from URL hash automatically and emits PASSWORD_RECOVERY
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (
+        event === "PASSWORD_RECOVERY" ||
+        event === "SIGNED_IN" ||
+        event === "INITIAL_SESSION"
+      )) {
         setSessionReady(true);
       }
     });

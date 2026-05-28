@@ -119,13 +119,13 @@ export function usePixPayment() {
   }, [status, pixData?.txid, toast]);
 
   const generatePix = useCallback(
-    async (params: { valor: number; nucleus: string; donorName?: string; email?: string; cpf?: string }) => {
+    async (params: { valor: number; nucleus: string; donorName?: string; email?: string; cpf?: string; isRecurring?: boolean }) => {
       setStatus("loading");
       setError(null);
 
       try {
         const { data, error: fnError } = await supabase.functions.invoke("processar-dominio-bb", {
-          body: { valor: params.valor, nucleus: params.nucleus, donorName: params.donorName, email: params.email, cpf: params.cpf },
+          body: { valor: params.valor, nucleus: params.nucleus, donorName: params.donorName, email: params.email, cpf: params.cpf, isRecurring: params.isRecurring ?? false },
         });
 
         if (fnError) throw fnError;

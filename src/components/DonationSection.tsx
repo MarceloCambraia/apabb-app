@@ -140,6 +140,7 @@ export function DonationSection() {
       donorName: formData.fullName,
       email: user?.email,
       cpf: formData.cpfCnpj,
+      isRecurring,
     });
   };
 

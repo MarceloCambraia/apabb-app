@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\marcelo.villela\\\\APABB\\\\apabb-together\\\\src\\\\pages\" -File)",
+      "Bash(Select-Object Name)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(grep \"\\\\.tsx$\")",
+      "Bash(npx tsc *)",
+      "Bash(npx supabase *)",
+      "Bash(Get-Item \"supabase\\\\functions\\\\enviar-lembrete-recorrencia\\\\index.ts\")",
+      "Bash(Select-Object FullName, LastWriteTime, Length)"
+    ]
+  }
+}
