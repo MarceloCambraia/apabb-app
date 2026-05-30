@@ -1,4 +1,4 @@
-package com.apabb.together;
+package br.org.apabb.app;
 
 import com.getcapacitor.BridgeActivity;
 
