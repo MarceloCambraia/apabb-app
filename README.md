@@ -1,73 +1,136 @@
-# Welcome to your Lovable project
+# APABB Together
 
-## Project info
+> Plataforma de doações e voluntariado da APABB — Associação de Pais, Amigos e Pessoas com Deficiência de Funcionários do Banco do Brasil.
 
-**URL**: https://lovable.dev/projects/8bc25a78-dd26-47c5-bb97-7c56c8e63f7a
+---
 
-## How can I edit this code?
+## 📱 Sobre o Projeto
 
-There are several ways of editing your application.
+O **APABB Together** é um aplicativo mobile (Android) e web que permite:
 
-**Use Lovable**
+- 💙 **Doações** via PIX, Boleto Bancário e Cartão de Crédito
+- 🔄 **Doações recorrentes** com sistema de badges (Apoiador, Protetor, Anjo)
+- 🤝 **Voluntariado** — cadastro, oportunidades e projetos
+- 👥 **Associação** — cadastro de associados
+- 📊 **Dashboard administrativo** — gestão de doações, voluntários e associados por núcleo
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8bc25a78-dd26-47c5-bb97-7c56c8e63f7a) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Stack
 
-**Use your preferred IDE**
+| Camada | Tecnologia |
+|--------|-----------|
+| Frontend | React + TypeScript + Vite + TailwindCSS + shadcn/ui |
+| Backend | Supabase (PostgreSQL + Edge Functions Deno) |
+| Mobile | Capacitor (Android) |
+| Pagamentos | Banco do Brasil API (PIX v2, Cobranças v2, BB Pay v2) |
+| Proxy mTLS | Node.js + Express (Railway) |
+| E-mail | Resend |
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 Como rodar localmente
 
-Follow these steps:
+### Pré-requisitos
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- Node.js 18+
+- npm
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Passos
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/MarceloCambraia/apabb-together.git
+cd apabb-together
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 2. Instalar dependências
+npm install
+
+# 3. Iniciar o servidor de desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Acesse em: `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 📦 Build para Android
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+# 1. Build do projeto web
+npm run build
 
-## What technologies are used for this project?
+# 2. Sincronizar com Android
+npx cap sync android
 
-This project is built with:
+# 3. Abrir no Android Studio
+npx cap open android
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+No Android Studio: **Build → Build APK(s)**
 
-## How can I deploy this project?
+**Package ID:** `br.org.apabb.app`
 
-Simply open [Lovable](https://lovable.dev/projects/8bc25a78-dd26-47c5-bb97-7c56c8e63f7a) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## 🗂️ Estrutura do Projeto
+apabb-together/
+├── src/
+│   ├── components/       # Componentes reutilizáveis
+│   ├── hooks/            # Custom hooks (usePixPayment, useSubscription...)
+│   ├── pages/            # Páginas da aplicação
+│   └── integrations/     # Configuração do Supabase
+├── supabase/
+│   └── functions/        # Edge Functions
+│       ├── processar-dominio-bb/        # PIX BB v2
+│       ├── gerar-boleto-bb/             # Boleto BB v2
+│       ├── bb-pix-webhook/              # Webhook confirmação PIX
+│       └── enviar-lembrete-recorrencia/ # Lembrete mensal (Resend)
+└── android/              # Projeto Android (Capacitor)
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 💳 Integrações de Pagamento
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+| Método | Status | Observação |
+|--------|--------|-----------|
+| PIX (BB) | ✅ Produção | Via proxy mTLS Railway |
+| Boleto (BB) | ⏳ Aguardando aprovação BB | API Cobranças v2 |
+| Cartão (BB Pay) | ⏳ Aguardando convênio | BB Pay v2 |
+
+---
+
+## 🔐 Variáveis de Ambiente (Supabase Secrets)
+
+| Secret | Descrição |
+|--------|-----------|
+| `BB_APP_KEY` | App Key de produção BB |
+| `BB_BASIC_AUTH` | Basic Auth (Base64) das credenciais BB |
+| `BB_CHAVE_PIX_DESTINO` | Chave PIX CNPJ da APABB |
+| `PROXY_SECRET` | Token de autenticação do proxy mTLS |
+| `BB_NUMERO_CONVENIO` | Número do convênio de cobrança BB |
+| `BB_NUMERO_CARTEIRA` | Número da carteira BB |
+| `BB_NUMERO_VARIACAO_CARTEIRA` | Variação da carteira BB |
+| `RESEND_API_KEY` | API Key do Resend para e-mails |
+
+---
+
+## 👥 Roles de Usuário
+
+| Role | Acesso |
+|------|--------|
+| `user` | Doações, voluntariado, perfil |
+| `admin` | Dashboard completo, todos os núcleos |
+| `coordenador_voluntarios` | Dashboard de voluntários do seu núcleo |
+
+---
+
+## 📧 Contato
+
+**APABB** — presidencia@apabb.org.br  
+**Desenvolvedor** — Marcelo Cambraia Villela
+
+Após substituir, commitar e fazer push:
+git add README.md
+git commit -m "docs: atualizar README com informações reais do projeto"
+git push
