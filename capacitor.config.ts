@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.apabb.together',
-  appName: 'APABB Together',
+  appId: 'br.org.apabb.app',
+  appName: 'APABB App',
   webDir: 'dist',
   server: {
     androidScheme: 'https'
