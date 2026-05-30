@@ -1,4 +1,4 @@
-# APABB Together
+# APABB APP
 
 > Plataforma de doações e voluntariado da APABB — Associação de Pais, Amigos e Pessoas com Deficiência de Funcionários do Banco do Brasil.
 
@@ -6,7 +6,7 @@
 
 ## 📱 Sobre o Projeto
 
-O **APABB Together** é um aplicativo mobile (Android) e web que permite:
+O **APABB App** é um aplicativo mobile (Android) e web que permite:
 
 - 💙 **Doações** via PIX, Boleto Bancário e Cartão de Crédito
 - 🔄 **Doações recorrentes** com sistema de badges (Apoiador, Protetor, Anjo)
@@ -40,8 +40,8 @@ O **APABB Together** é um aplicativo mobile (Android) e web que permite:
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/MarceloCambraia/apabb-together.git
-cd apabb-together
+git clone https://github.com/MarceloCambraia/apabb-app.git
+cd apabb-app
 
 # 2. Instalar dependências
 npm install
@@ -74,7 +74,7 @@ No Android Studio: **Build → Build APK(s)**
 ---
 
 ## 🗂️ Estrutura do Projeto
-apabb-together/
+apabb-app/
 ├── src/
 │   ├── components/       # Componentes reutilizáveis
 │   ├── hooks/            # Custom hooks (usePixPayment, useSubscription...)
