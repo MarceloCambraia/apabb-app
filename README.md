@@ -125,10 +125,6 @@ apabb-app/
 
 ---
 
-## 📧 Contato
-
-**APABB** — presidencia@apabb.org.br
-
 **Grupo Desenvolvedor:**
 
 Marcelo Cambraia Villela
