@@ -1,11 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, FolderOpen, Heart, User, Newspaper } from "lucide-react";
+import { Home, HandHeart, Heart, User, Newspaper } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", icon: Home, label: "Início" },
-  { to: "/projetos", icon: FolderOpen, label: "Projetos" },
+  { to: "/voluntariado", icon: HandHeart, label: "Voluntariado" },
   { to: "/doar", icon: Heart, label: "Doar" },
   { to: "/noticias", icon: Newspaper, label: "Notícias" },
   { to: "/perfil", icon: User, label: "Perfil" },
@@ -13,7 +13,7 @@ const navItems = [
 
 const guestNavItems = [
   { to: "/", icon: Home, label: "Início" },
-  { to: "/projetos", icon: FolderOpen, label: "Projetos" },
+  { to: "/voluntariado", icon: HandHeart, label: "Voluntariado" },
   { to: "/doar", icon: Heart, label: "Doar" },
   { to: "/noticias", icon: Newspaper, label: "Notícias" },
   { to: "/auth", icon: User, label: "Entrar" },

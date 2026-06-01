@@ -2,10 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
-import Projetos from "./pages/Projetos";
 import Marketplace from "./pages/Marketplace";
 import Voluntariado from "./pages/Voluntariado";
 import Associar from "./pages/Associar";
@@ -24,7 +23,6 @@ import VoluntariosDashboard from "./pages/admin/VoluntariosDashboard";
 import VoluntariosCadastros from "./pages/admin/VoluntariosCadastros";
 import VoluntariosOportunidades from "./pages/admin/VoluntariosOportunidades";
 import VoluntariosProjetos from "./pages/admin/VoluntariosProjetos";
-import VoluntariosCoordenadores from "./pages/admin/VoluntariosCoordenadores";
 
 const queryClient = new QueryClient();
 
@@ -37,7 +35,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/projetos" element={<Projetos />} />
+            <Route path="/projetos" element={<Navigate to="/voluntariado" replace />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/voluntariado" element={<Voluntariado />} />
             <Route path="/associar" element={<Associar />} />
@@ -55,9 +53,6 @@ const App = () => (
                 <Route path="cadastros" element={<VoluntariosCadastros />} />
                 <Route path="oportunidades" element={<VoluntariosOportunidades />} />
                 <Route path="projetos" element={<VoluntariosProjetos />} />
-                <Route element={<RequireVolunteerAdmin adminOnly />}>
-                  <Route path="coordenadores" element={<VoluntariosCoordenadores />} />
-                </Route>
               </Route>
             </Route>
             <Route path="/documento-visao" element={<DocumentoVisao />} />
