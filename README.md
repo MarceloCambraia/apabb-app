@@ -127,8 +127,21 @@ apabb-app/
 
 ## 📧 Contato
 
-**APABB** — presidencia@apabb.org.br  
-**Desenvolvedor** — Marcelo Cambraia Villela
+**APABB** — presidencia@apabb.org.br
+
+**Grupo Desenvolvedor:**
+
+Marcelo Cambraia Villela
+
+Arthur Alves de Oliveira
+
+Jutahy Ferreira dos Santos
+
+Davi dos Anjos Mendes de Souza
+
+Vinícius Vasconcelos Parreira
+
+---
 
 Após substituir, commitar e fazer push:
 git add README.md
