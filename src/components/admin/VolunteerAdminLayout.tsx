@@ -4,7 +4,6 @@ import {
   ClipboardList,
   Briefcase,
   FolderKanban,
-  UserCog,
   ArrowLeft,
 } from 'lucide-react';
 import {
@@ -32,14 +31,12 @@ const baseItems = [
   { title: 'Projetos', url: '/admin/voluntarios/projetos', icon: FolderKanban },
 ];
 
-function VolunteerSidebar({ isAdmin }: { isAdmin: boolean }) {
+function VolunteerSidebar({ isAdmin: _isAdmin }: { isAdmin: boolean }) {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const { pathname } = useLocation();
 
-  const items = isAdmin
-    ? [...baseItems, { title: 'Coordenadores', url: '/admin/voluntarios/coordenadores', icon: UserCog }]
-    : baseItems;
+  const items = baseItems;
 
   const isActive = (url: string, exact?: boolean) =>
     exact ? pathname === url : pathname === url || pathname.startsWith(url + '/');

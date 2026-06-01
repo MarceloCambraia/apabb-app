@@ -48,14 +48,11 @@ export function Header() {
           <Link to="/" className="text-sm font-medium hover:text-primary transition-smooth">
             Início
           </Link>
-          <Link to="/projetos" className="text-sm font-medium hover:text-primary transition-smooth">
-            Projetos
+          <Link to="/voluntariado" className="text-sm font-medium hover:text-primary transition-smooth">
+            Voluntariado
           </Link>
           <Link to="/marketplace" className="text-sm font-medium hover:text-primary transition-smooth">
             Marketplace
-          </Link>
-          <Link to="/voluntariado" className="text-sm font-medium hover:text-primary transition-smooth">
-            Voluntariado
           </Link>
           <Link to="/noticias" className="text-sm font-medium hover:text-primary transition-smooth">
             Notícias

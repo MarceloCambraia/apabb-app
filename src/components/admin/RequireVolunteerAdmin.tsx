@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export function RequireVolunteerAdmin({ adminOnly = false }: { adminOnly?: boolean }) {
+export function RequireVolunteerAdmin() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isVolunteerCoordinator, loading } = useUserRole();
   const location = useLocation();
@@ -21,7 +21,7 @@ export function RequireVolunteerAdmin({ adminOnly = false }: { adminOnly?: boole
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  if (adminOnly ? !isAdmin : !(isAdmin || isVolunteerCoordinator)) {
+  if (!(isAdmin || isVolunteerCoordinator)) {
     return <Navigate to="/" replace />;
   }
 
