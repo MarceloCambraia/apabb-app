@@ -84,9 +84,7 @@ export function Hero() {
         <h1 className="text-[18px] font-bold text-white leading-snug mb-1.5">
           Transforme vidas com sua doação
         </h1>
-        <p className="text-white/70 text-xs mb-5 leading-relaxed">
-          38 anos promovendo inclusão em 15 capitais
-        </p>
+        <div className="mb-5" />
         <Link to="/doar">
           <span
             className="inline-block px-7 py-2.5 rounded-full text-sm font-semibold text-white shadow-md active:scale-95 transition-transform cursor-pointer select-none"
