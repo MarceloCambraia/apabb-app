@@ -269,6 +269,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          is_recurring: boolean
           nucleus: string
           pix_copia_cola: string | null
           status: string
@@ -282,6 +283,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
+          is_recurring?: boolean
           nucleus?: string
           pix_copia_cola?: string | null
           status?: string
@@ -295,6 +297,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          is_recurring?: boolean
           nucleus?: string
           pix_copia_cola?: string | null
           status?: string
@@ -309,34 +312,43 @@ export type Database = {
         Row: {
           age: number | null
           avatar_url: string | null
+          badge_level: string | null
           birth_date: string | null
           created_at: string
           full_name: string | null
           id: string
+          is_recurring_donor: boolean | null
           nucleus: string | null
           phone: string | null
+          total_donated: number | null
           updated_at: string
         }
         Insert: {
           age?: number | null
           avatar_url?: string | null
+          badge_level?: string | null
           birth_date?: string | null
           created_at?: string
           full_name?: string | null
           id: string
+          is_recurring_donor?: boolean | null
           nucleus?: string | null
           phone?: string | null
+          total_donated?: number | null
           updated_at?: string
         }
         Update: {
           age?: number | null
           avatar_url?: string | null
+          badge_level?: string | null
           birth_date?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          is_recurring_donor?: boolean | null
           nucleus?: string | null
           phone?: string | null
+          total_donated?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -406,6 +418,48 @@ export type Database = {
           status?: Database["public"]["Enums"]["project_status"]
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          amount: number
+          badge_level: string
+          created_at: string
+          id: string
+          last_charge_date: string | null
+          next_charge_date: string
+          payment_method: string
+          reminder_sent_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          badge_level?: string
+          created_at?: string
+          id?: string
+          last_charge_date?: string | null
+          next_charge_date?: string
+          payment_method?: string
+          reminder_sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          badge_level?: string
+          created_at?: string
+          id?: string
+          last_charge_date?: string | null
+          next_charge_date?: string
+          payment_method?: string
+          reminder_sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -560,6 +614,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_badge_level: { Args: { amount: number }; Returns: string }
       can_manage_volunteers: {
         Args: { _nucleus: string; _user_id: string }
         Returns: boolean
