@@ -8,7 +8,8 @@
       "Bash(npx tsc *)",
       "Bash(npx supabase *)",
       "Bash(Get-Item \"supabase\\\\functions\\\\enviar-lembrete-recorrencia\\\\index.ts\")",
-      "Bash(Select-Object FullName, LastWriteTime, Length)"
+      "Bash(Select-Object FullName, LastWriteTime, Length)",
+      "Bash(npm install *)"
     ]
   }
 }
