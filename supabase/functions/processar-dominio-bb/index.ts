@@ -43,7 +43,7 @@ serve(async (req) => {
     // OAuth token (with cache)
     const now = Date.now();
     if (!tokenCache || now >= tokenCache.expiresAt - 120000) {
-      const bbRes = await fetch("https://bb-mtls-proxy-production.up.railway.app/oauth/token", {
+      const bbRes = await fetch("https://bb-mtls-proxy-216085914365.us-central1.run.app/oauth/token", {
         method: "POST",
         headers: {
           Authorization: `Basic ${Deno.env.get("BB_BASIC_AUTH")}`,
@@ -61,7 +61,7 @@ serve(async (req) => {
 
     // Criar cobrança PIX
     const pixRes = await fetch(
-      `https://bb-mtls-proxy-production.up.railway.app/pix/v2/cob/${txid}?gw-app-key=${Deno.env.get("BB_APP_KEY")}`,
+      `https://bb-mtls-proxy-216085914365.us-central1.run.app/pix/v2/cob/${txid}?gw-app-key=${Deno.env.get("BB_APP_KEY")}`,
       {
         method: "PUT",
         headers: {

@@ -14,7 +14,7 @@ async function getAccessToken(): Promise<string> {
     return tokenCache.accessToken;
   }
 
-  const res = await fetch("https://bb-mtls-proxy-production.up.railway.app/oauth/token", {
+  const res = await fetch("https://bb-mtls-proxy-216085914365.us-central1.run.app/oauth/token", {
     method: "POST",
     headers: {
       Authorization: `Basic ${Deno.env.get("BB_BASIC_AUTH")}`,
@@ -180,7 +180,7 @@ serve(async (req) => {
     };
 
     const bbRes = await fetch(
-      `https://bb-mtls-proxy-production.up.railway.app/cobrancas/v2/boletos?gw-app-key=${appKey}`,
+      `https://bb-mtls-proxy-216085914365.us-central1.run.app/cobrancas/v2/boletos?gw-app-key=${appKey}`,
       {
         method: "POST",
         headers: {
