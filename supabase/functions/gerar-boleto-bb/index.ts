@@ -14,12 +14,11 @@ async function getAccessToken(): Promise<string> {
     return tokenCache.accessToken;
   }
 
-  const res = await fetch("https://bb-mtls-proxy-216085914365.us-central1.run.app/oauth/token", {
+  const res = await fetch("https://oauth.bb.com.br/oauth/token", {
     method: "POST",
     headers: {
-      Authorization: `Basic ${Deno.env.get("BB_BASIC_AUTH")}`,
+      Authorization: `Basic ${Deno.env.get("BB_BASIC_AUTH_BOLETO")}`,
       "Content-Type": "application/x-www-form-urlencoded",
-      "x-proxy-secret": Deno.env.get("PROXY_SECRET") ?? "",
     },
     body: new URLSearchParams({
       grant_type: "client_credentials",
@@ -120,7 +119,7 @@ serve(async (req) => {
     const convenio = Deno.env.get("BB_NUMERO_CONVENIO")!;
     const carteira = Deno.env.get("BB_NUMERO_CARTEIRA") || "17";
     const variacao = Deno.env.get("BB_NUMERO_VARIACAO_CARTEIRA") || "35";
-    const appKey = Deno.env.get("BB_APP_KEY")!;
+    const appKey = Deno.env.get("BB_APP_KEY_BOLETO")!;
 
     if (!convenio || !appKey) {
       return new Response(
@@ -180,14 +179,13 @@ serve(async (req) => {
     };
 
     const bbRes = await fetch(
-      `https://bb-mtls-proxy-216085914365.us-central1.run.app/cobrancas/v2/boletos?gw-app-key=${appKey}`,
+      `https://api.bb.com.br/cobrancas/v2/boletos?gw-app-key=${appKey}`,
       {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
           Accept: "application/json",
-          "x-proxy-secret": Deno.env.get("PROXY_SECRET") ?? "",
         },
         body: JSON.stringify(bbBody),
       }
