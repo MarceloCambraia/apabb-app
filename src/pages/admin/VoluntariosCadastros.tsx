@@ -25,6 +25,15 @@ import {
 } from '@/lib/volunteer-constants';
 import { MessageSquare, Search } from 'lucide-react';
 
+const todayStr = new Date().toISOString().split('T')[0];
+
+const CONTACT_MEDIUM_OPTIONS = [
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'email', label: 'E-mail' },
+  { value: 'telefone', label: 'Telefone' },
+  { value: 'presencial', label: 'Presencial' },
+];
+
 export default function VoluntariosCadastros() {
   const { isAdmin, nucleus } = useUserRole();
   const { user } = useAuth();
@@ -38,6 +47,8 @@ export default function VoluntariosCadastros() {
 
   const [target, setTarget] = useState<{ id: string; status: VolunteerStatus } | null>(null);
   const [notes, setNotes] = useState('');
+  const [contactMedium, setContactMedium] = useState('');
+  const [contactedAt, setContactedAt] = useState(todayStr);
 
   const effectiveNucleus = !isAdmin ? nucleus : filterNucleus === 'all' ? null : filterNucleus;
 
@@ -64,25 +75,42 @@ export default function VoluntariosCadastros() {
     });
   }, [volunteers, filterStatus, filterArea, search]);
 
+  const resetDialog = () => {
+    setTarget(null);
+    setNotes('');
+    setContactMedium('');
+    setContactedAt(todayStr);
+  };
+
+  const handleAction = (v: any, status: VolunteerStatus) => {
+    setTarget({ id: v.id, status });
+  };
+
   const updateMutation = useMutation({
-    mutationFn: async ({ id, status, review_notes }: { id: string; status: string; review_notes: string }) => {
-      const { error } = await supabase
-        .from('volunteers')
-        .update({
-          status,
-          review_notes: review_notes || null,
-          reviewed_by: user?.id,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq('id', id);
+    mutationFn: async ({
+      id, status, review_notes, contacted_at, contact_medium,
+    }: {
+      id: string; status: string; review_notes: string;
+      contacted_at?: string; contact_medium?: string;
+    }) => {
+      const update: Record<string, any> = {
+        status,
+        review_notes: review_notes || null,
+        reviewed_by: user?.id,
+        reviewed_at: new Date().toISOString(),
+      };
+      if (status === 'em_contato') {
+        update.contacted_at = contacted_at || new Date().toISOString();
+        update.contact_medium = contact_medium || null;
+      }
+      const { error } = await (supabase as any).from('volunteers').update(update).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-volunteers'] });
       queryClient.invalidateQueries({ queryKey: ['voluntarios-dashboard'] });
       toast({ title: 'Status atualizado' });
-      setTarget(null);
-      setNotes('');
+      resetDialog();
     },
     onError: (e: any) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
   });
@@ -94,12 +122,13 @@ export default function VoluntariosCadastros() {
         <p className="text-sm text-muted-foreground">Aprove, rejeite ou marque voluntários como em contato</p>
       </div>
 
+      {/* Filtros */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
             {isAdmin && (
               <Select value={filterNucleus} onValueChange={setFilterNucleus}>
                 <SelectTrigger><SelectValue placeholder="Núcleo" /></SelectTrigger>
@@ -129,7 +158,7 @@ export default function VoluntariosCadastros() {
                 ))}
               </SelectContent>
             </Select>
-            <div className="relative">
+            <div className="relative col-span-2 md:col-span-1">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input className="pl-8" placeholder="Nome ou email" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
@@ -144,77 +173,179 @@ export default function VoluntariosCadastros() {
           ) : filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Nenhum voluntário encontrado</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead>Núcleo</TableHead>
-                    <TableHead>Área</TableHead>
-                    <TableHead>Mensagem</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((v: any) => (
-                    <TableRow key={v.id}>
-                      <TableCell className="font-medium">{v.name}</TableCell>
-                      <TableCell className="text-sm">
-                        <div>{v.email}</div>
-                        <div className="text-muted-foreground">{v.phone}</div>
-                      </TableCell>
-                      <TableCell>{NUCLEUS_NAMES[v.nucleus] || v.nucleus}</TableCell>
-                      <TableCell>{INTEREST_AREA_NAMES[v.interest_area] || v.interest_area}</TableCell>
-                      <TableCell>
-                        {v.message ? (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon"><MessageSquare className="h-4 w-4" /></Button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs"><p>{v.message}</p></TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm">{new Date(v.created_at).toLocaleDateString('pt-BR')}</TableCell>
-                      <TableCell><StatusBadge status={v.status} /></TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setTarget({ id: v.id, status: 'aprovado' })}>Aprovar</Button>
-                          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setTarget({ id: v.id, status: 'em_contato' })}>Em Contato</Button>
-                          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setTarget({ id: v.id, status: 'rejeitado' })}>Rejeitar</Button>
+            <>
+              {/* Cards — mobile */}
+              <div className="md:hidden space-y-3">
+                {filtered.map((v: any) => (
+                  <div key={v.id} className="bg-white rounded-lg border p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-sm text-gray-900">{v.name}</p>
+                        <p className="text-xs text-gray-500">{v.email}</p>
+                        <p className="text-xs text-gray-500">{v.phone}</p>
+                      </div>
+                      <StatusBadge status={v.status} />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-gray-500">Núcleo: </span>
+                        <span className="font-medium">{NUCLEUS_NAMES[v.nucleus] || v.nucleus}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Área: </span>
+                        <span className="font-medium">{INTEREST_AREA_NAMES[v.interest_area] || v.interest_area}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Cadastro: </span>
+                        <span className="font-medium">{new Date(v.created_at).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      {v.contacted_at && (
+                        <div>
+                          <span className="text-gray-500">Contato: </span>
+                          <span className="font-medium">
+                            {new Date(v.contacted_at).toLocaleDateString('pt-BR')}
+                            {v.contact_medium && ` via ${v.contact_medium}`}
+                          </span>
                         </div>
-                      </TableCell>
+                      )}
+                    </div>
+
+                    {v.message && (
+                      <p className="text-xs text-gray-600 bg-gray-50 rounded p-2 line-clamp-2">{v.message}</p>
+                    )}
+
+                    <div className="flex gap-2 pt-1">
+                      <Button size="sm" className="flex-1 text-xs bg-green-600 hover:bg-green-700"
+                        onClick={() => handleAction(v, 'aprovado')}>
+                        ✓ Aprovar
+                      </Button>
+                      <Button size="sm" className="flex-1 text-xs bg-blue-600 hover:bg-blue-700"
+                        onClick={() => handleAction(v, 'em_contato')}>
+                        📞 Contato
+                      </Button>
+                      <Button size="sm" variant="destructive" className="flex-1 text-xs"
+                        onClick={() => handleAction(v, 'rejeitado')}>
+                        ✗ Rejeitar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tabela — desktop */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Contato</TableHead>
+                      <TableHead>Núcleo</TableHead>
+                      <TableHead>Área</TableHead>
+                      <TableHead>Mensagem</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Último Contato</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((v: any) => (
+                      <TableRow key={v.id}>
+                        <TableCell className="font-medium">{v.name}</TableCell>
+                        <TableCell className="text-sm">
+                          <div>{v.email}</div>
+                          <div className="text-muted-foreground">{v.phone}</div>
+                        </TableCell>
+                        <TableCell>{NUCLEUS_NAMES[v.nucleus] || v.nucleus}</TableCell>
+                        <TableCell>{INTEREST_AREA_NAMES[v.interest_area] || v.interest_area}</TableCell>
+                        <TableCell>
+                          {v.message ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon"><MessageSquare className="h-4 w-4" /></Button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs"><p>{v.message}</p></TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm">{new Date(v.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                        <TableCell className="text-sm">
+                          {v.status === 'em_contato' && v.contacted_at ? (
+                            <div>
+                              <div>{new Date(v.contacted_at).toLocaleDateString('pt-BR')}</div>
+                              {v.contact_medium && (
+                                <div className="text-muted-foreground text-xs capitalize">{v.contact_medium}</div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell><StatusBadge status={v.status} /></TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleAction(v, 'aprovado')}>Aprovar</Button>
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleAction(v, 'em_contato')}>Em Contato</Button>
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => handleAction(v, 'rejeitado')}>Rejeitar</Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={!!target} onOpenChange={(o) => { if (!o) { setTarget(null); setNotes(''); } }}>
+      <Dialog open={!!target} onOpenChange={(o) => { if (!o) resetDialog(); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
               Marcar como {target ? VOLUNTEER_STATUS_LABELS[target.status] : ''}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label>Notas da revisão (opcional)</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} placeholder="Observações..." />
+          <div className="space-y-4">
+            {target?.status === 'em_contato' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Meio de contato</Label>
+                  <Select value={contactMedium} onValueChange={setContactMedium}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o meio" /></SelectTrigger>
+                    <SelectContent>
+                      {CONTACT_MEDIUM_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Data do contato</Label>
+                  <Input type="date" value={contactedAt} onChange={(e) => setContactedAt(e.target.value)} />
+                </div>
+              </>
+            )}
+            <div className="space-y-2">
+              <Label>Notas da revisão (opcional)</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Observações..." />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setTarget(null); setNotes(''); }}>Cancelar</Button>
+            <Button variant="outline" onClick={resetDialog}>Cancelar</Button>
             <Button
-              onClick={() => target && updateMutation.mutate({ id: target.id, status: target.status, review_notes: notes })}
+              onClick={() => target && updateMutation.mutate({
+                id: target.id,
+                status: target.status,
+                review_notes: notes,
+                contacted_at: target.status === 'em_contato' ? contactedAt : undefined,
+                contact_medium: target.status === 'em_contato' ? contactMedium : undefined,
+              })}
               disabled={updateMutation.isPending}
             >
               Confirmar

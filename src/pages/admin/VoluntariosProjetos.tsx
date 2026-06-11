@@ -17,33 +17,14 @@ export default function VoluntariosProjetos() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-project-registrations', isAdmin, nucleus],
     queryFn: async () => {
-      let projQ = supabase.from('projects').select('id, title, nucleus');
-      if (!isAdmin && nucleus) projQ = projQ.eq('nucleus', nucleus);
-      const { data: projects, error: pe } = await projQ;
-      if (pe) throw pe;
-      const projectMap = new Map((projects || []).map((p) => [p.id, p]));
-      const ids = (projects || []).map((p) => p.id);
-      if (!ids.length) return [];
-
-      const { data: regs, error: re } = await supabase
-        .from('project_registrations')
+      let q = supabase
+        .from('project_registrations_detail')
         .select('*')
-        .in('project_id', ids)
         .order('registration_date', { ascending: false });
-      if (re) throw re;
-
-      const userIds = Array.from(new Set((regs || []).map((r) => r.user_id)));
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, phone')
-        .in('id', userIds);
-      const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
-
-      return (regs || []).map((r) => ({
-        ...r,
-        project: projectMap.get(r.project_id),
-        profile: profileMap.get(r.user_id),
-      }));
+      if (!isAdmin && nucleus) q = q.eq('project_nucleus', nucleus);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
     },
   });
 
@@ -81,7 +62,7 @@ export default function VoluntariosProjetos() {
                     <TableHead>Projeto</TableHead>
                     <TableHead>Núcleo</TableHead>
                     <TableHead>Voluntário</TableHead>
-                    <TableHead>Telefone</TableHead>
+                    <TableHead>E-mail</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Ações</TableHead>
@@ -90,12 +71,14 @@ export default function VoluntariosProjetos() {
                 <TableBody>
                   {data.map((r: any) => (
                     <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.project?.title || '—'}</TableCell>
-                      <TableCell>{NUCLEUS_NAMES[r.project?.nucleus] || r.project?.nucleus}</TableCell>
-                      <TableCell>{r.profile?.full_name || '—'}</TableCell>
-                      <TableCell>{r.profile?.phone || '—'}</TableCell>
+                      <TableCell className="font-medium">{r.project_title || '—'}</TableCell>
+                      <TableCell>{NUCLEUS_NAMES[r.project_nucleus] || r.project_nucleus}</TableCell>
+                      <TableCell>{r.user_name || '—'}</TableCell>
+                      <TableCell className="text-sm">{r.user_email || '—'}</TableCell>
                       <TableCell className="text-sm">{new Date(r.registration_date).toLocaleDateString('pt-BR')}</TableCell>
-                      <TableCell><StatusBadge status={r.status === 'aprovado' ? 'aprovado' : r.status === 'rejeitado' ? 'rejeitado' : 'pendente'} /></TableCell>
+                      <TableCell>
+                        <StatusBadge status={r.status === 'aprovado' ? 'aprovado' : r.status === 'rejeitado' ? 'rejeitado' : 'pendente'} />
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => updateMut.mutate({ id: r.id, status: 'aprovado' })}>Aprovar</Button>
