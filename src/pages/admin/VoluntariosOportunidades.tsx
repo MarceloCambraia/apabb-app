@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,7 +30,7 @@ export default function VoluntariosOportunidades() {
     queryKey: ['admin-opportunities-all', isAdmin, nucleus],
     queryFn: async () => {
       let q = supabase.from('volunteer_opportunities').select('*').order('created_at', { ascending: false });
-      if (!isAdmin && nucleus) q = q.eq('nucleus', nucleus);
+      if (nucleus) q = q.eq('nucleus', nucleus);
       const { data, error } = await q;
       if (error) throw error;
       return data;
@@ -85,7 +85,7 @@ export default function VoluntariosOportunidades() {
 
   const startCreate = () => {
     setEditing(null);
-    setForm({ ...empty, nucleus: !isAdmin && nucleus ? nucleus : '' });
+    setForm({ ...empty, nucleus: nucleus || '' });
     setOpen(true);
   };
 
@@ -97,7 +97,7 @@ export default function VoluntariosOportunidades() {
     const payload: any = {
       title: form.title,
       description: form.description,
-      nucleus: form.nucleus,
+      nucleus: nucleus || form.nucleus,
       status: form.status,
       time_commitment: form.time_commitment || null,
       image_url: form.image_url || null,
@@ -133,17 +133,24 @@ export default function VoluntariosOportunidades() {
                 <Label>Descrição</Label>
                 <Textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
-              <div>
-                <Label>Núcleo</Label>
-                <Select value={form.nucleus} onValueChange={(v) => setForm({ ...form, nucleus: v })} disabled={!isAdmin}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {NUCLEUS_OPTIONS.map((n) => (
-                      <SelectItem key={n.value} value={n.value}>{n.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Só super-admins (sem núcleo fixo) escolhem o núcleo */}
+              {!nucleus ? (
+                <div>
+                  <Label>Núcleo</Label>
+                  <Select value={form.nucleus} onValueChange={(v) => setForm({ ...form, nucleus: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {NUCLEUS_OPTIONS.map((n) => (
+                        <SelectItem key={n.value} value={n.value}>{n.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Núcleo: <span className="font-medium">{NUCLEUS_NAMES[nucleus]}</span>
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Carga horária</Label>

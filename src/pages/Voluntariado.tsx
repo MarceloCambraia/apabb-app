@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BottomNav } from "@/components/BottomNav";
@@ -82,6 +82,8 @@ export default function Voluntariado() {
   const [confirmOpportunity, setConfirmOpportunity] = useState<any | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filtroNucleo, setFiltroNucleo] = useState("todos");
+  const [filtroNucleoPrograma, setFiltroNucleoPrograma] = useState("todos");
 
   const { data: projects, isLoading: projectsLoading } = useQuery({
     queryKey: ["public-projects"],
@@ -122,6 +124,26 @@ export default function Voluntariado() {
     },
     enabled: !!user,
   });
+
+  const nucleosComOportunidades = useMemo(() => {
+    const set = new Set((opportunities || []).map((o: any) => o.nucleus).filter(Boolean));
+    return Array.from(set).sort();
+  }, [opportunities]);
+
+  const nucleosComProjetos = useMemo(() => {
+    const set = new Set((projects || []).map((p: any) => p.nucleus).filter(Boolean));
+    return Array.from(set).sort();
+  }, [projects]);
+
+  const oportunidadesFiltradas = useMemo(() => {
+    if (filtroNucleo === "todos") return opportunities || [];
+    return (opportunities || []).filter((o: any) => o.nucleus === filtroNucleo);
+  }, [opportunities, filtroNucleo]);
+
+  const projetosFiltrados = useMemo(() => {
+    if (filtroNucleoPrograma === "todos") return projects || [];
+    return (projects || []).filter((p: any) => p.nucleus === filtroNucleoPrograma);
+  }, [projects, filtroNucleoPrograma]);
 
   const registerOppMutation = useMutation({
     mutationFn: async (opportunityId: string) => {
@@ -237,19 +259,37 @@ export default function Voluntariado() {
               </p>
             </div>
 
+            {!projectsLoading && nucleosComProjetos.length > 1 && (
+              <div className="flex flex-wrap gap-2 justify-center mb-8">
+                {["todos", ...nucleosComProjetos].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setFiltroNucleoPrograma(n)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                      filtroNucleoPrograma === n
+                        ? "bg-[#1A5276] text-white border-[#1A5276]"
+                        : "bg-white text-[#1A5276] border-[#1A5276] hover:bg-blue-50"
+                    }`}
+                  >
+                    {n === "todos" ? "Todos" : NUCLEUS_NAMES[n] || n}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {projectsLoading ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <Skeleton key={i} className="h-52" />
                 ))}
               </div>
-            ) : !projects?.length ? (
+            ) : !projetosFiltrados.length ? (
               <p className="text-center text-muted-foreground py-12">
                 Nenhum programa disponível no momento.
               </p>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {projects.map((project) => {
+                {projetosFiltrados.map((project) => {
                   const Icon = getCategoryIcon(project.title, project.description);
                   return (
                     <Card
@@ -309,19 +349,37 @@ export default function Voluntariado() {
               </p>
             </div>
 
+            {!oppsLoading && nucleosComOportunidades.length > 1 && (
+              <div className="flex flex-wrap gap-2 justify-center mb-8">
+                {["todos", ...nucleosComOportunidades].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setFiltroNucleo(n)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                      filtroNucleo === n
+                        ? "bg-[#1A5276] text-white border-[#1A5276]"
+                        : "bg-white text-[#1A5276] border-[#1A5276] hover:bg-blue-50"
+                    }`}
+                  >
+                    {n === "todos" ? "Todos" : NUCLEUS_NAMES[n] || n}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {oppsLoading ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {[1, 2, 3].map((i) => (
                   <Skeleton key={i} className="h-64" />
                 ))}
               </div>
-            ) : !opportunities?.length ? (
+            ) : !oportunidadesFiltradas.length ? (
               <p className="text-center text-muted-foreground py-12">
                 Nenhuma oportunidade aberta no momento.
               </p>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {opportunities.map((opp) => {
+                {oportunidadesFiltradas.map((opp) => {
                   const isRegistered = myOppRegistrations?.includes(opp.id);
                   const filled = (opp as any).filled_slots ?? 0;
                   const max = opp.max_slots;
