@@ -17,11 +17,10 @@ export default function VoluntariosProjetos() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-project-registrations', isAdmin, nucleus],
     queryFn: async () => {
-      let q = supabase
-        .from('project_registrations_detail')
-        .select('*')
-        .order('registration_date', { ascending: false });
-      if (!isAdmin && nucleus) q = q.eq('project_nucleus', nucleus);
+      // view não está nos tipos gerados ainda
+      // @ts-ignore
+      let q: any = supabase.from('project_registrations_detail').select('*').order('registration_date', { ascending: false });
+      if (nucleus) q = q.eq('project_nucleus', nucleus);
       const { data, error } = await q;
       if (error) throw error;
       return data || [];
