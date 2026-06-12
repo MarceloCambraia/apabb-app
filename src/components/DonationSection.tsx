@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { QRCodeSVG } from "qrcode.react";
 import {
-  Heart, CreditCard, Building2, FileText, Wallet, QrCode,
-  User, Mail, Phone, MapPin, Calendar, Loader2, CheckCircle2, AlertCircle, Copy, Check,
-  ChevronLeft, ChevronRight, Clock, RefreshCw
+  Heart, CreditCard, FileText, QrCode,
+  User, MapPin, Calendar, Loader2, CheckCircle2, AlertCircle, Copy, Check,
+  ChevronLeft, ChevronRight, Clock, RefreshCw, ExternalLink
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -18,9 +18,7 @@ import {
   useDonation,
   formatCurrency,
   formatCpfCnpj,
-  formatPhone,
   formatCep,
-  formatCardNumber
 } from "@/hooks/useDonation";
 import { usePixPayment } from "@/hooks/usePixPayment";
 import { useBoletoPayment } from "@/hooks/useBoletoPayment";
@@ -36,7 +34,7 @@ const donationAmounts = [
 
 const paymentMethods = [
   { value: "pix", label: "PIX", icon: QrCode, description: "Pagamento instantâneo" },
-  { value: "credit_card", label: "Cartão de Crédito", icon: CreditCard, description: "Visa, Master, Elo" },
+  { value: "credit_card", label: "Cartão de Crédito", icon: CreditCard, description: "BB Pay — Cartão, PIX ou Pontos Livelo" },
   { value: "boleto", label: "Boleto Bancário", icon: FileText, description: "Vencimento em 3 dias úteis" },
 ];
 
@@ -173,22 +171,8 @@ export function DonationSection() {
 
   const handleCardDonation = async () => {
     setAgeError(null);
-
-    const month = formData.cardExpiryMonth || "";
-    const year = formData.cardExpiryYear || "";
-    if (!formData.cardNumber || !formData.cardCvv || !month || !year || !formData.cardName) {
-      toast({ title: "Dados do cartão incompletos", description: "Preencha todos os campos do cartão.", variant: "destructive" });
-      return;
-    }
-
     await card.processPayment({
       valor: selectedAmount,
-      cartao: {
-        numero: formData.cardNumber,
-        validade: `${month}/${year}`,
-        cvv: formData.cardCvv,
-        nome: formData.cardName,
-      },
       pagador: {
         nome: formData.fullName || "",
         cpf: formData.cpfCnpj || "",
@@ -466,35 +450,48 @@ export function DonationSection() {
     );
   }
 
-  // --- Card Approved Screen ---
-  if (card.status === "approved" && card.result) {
+  // --- BB Pay Link Screen ---
+  if (card.status === "pending_payment" && card.result) {
     return (
       <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
         <div className="container mx-auto px-4">
           <Card className="max-w-lg mx-auto shadow-strong">
             <CardContent className="pt-12 pb-8 space-y-6 text-center">
-              <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center animate-in zoom-in duration-500">
-                <CheckCircle2 className="w-14 h-14 text-primary" />
-              </div>
-              <h2 className="text-3xl font-bold text-foreground">Pagamento Aprovado!</h2>
-              <p className="text-lg text-muted-foreground max-w-sm mx-auto">
-                Doação de{" "}
+              <div className="text-5xl">📱</div>
+              <h3 className="font-bold text-xl text-foreground">Pague pelo App Banco do Brasil</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                Clique no botão abaixo para abrir o App BB e finalizar seu pagamento de{" "}
                 <strong className="text-foreground">
                   {card.result.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </strong>{" "}
-                processada com sucesso.
+                com cartão, PIX ou pontos Livelo.
               </p>
-              {card.result.authorizationCode && (
-                <div className="bg-muted/50 rounded-lg p-4 text-sm">
-                  <p className="text-muted-foreground">Código de Autorização</p>
-                  <p className="font-mono font-semibold text-foreground break-all">{card.result.authorizationCode}</p>
+              <a
+                href={card.result.urlSolicitacao}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full bg-[#F39C12] hover:bg-[#E67E22] text-white font-bold py-4 px-6 rounded-lg transition-colors"
+              >
+                Abrir App Banco do Brasil <ExternalLink className="w-4 h-4" />
+              </a>
+              {card.result.qrCode && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground font-medium">Ou escaneie o QR Code PIX:</p>
+                  <div className="bg-white p-4 rounded-xl inline-block">
+                    <QRCodeSVG value={card.result.qrCode} size={160} level="M" />
+                  </div>
                 </div>
               )}
-              <p className="text-sm text-muted-foreground">
-                {card.result.cardBrand} •••• {card.result.cardLastFour}
+              <p className="text-xs text-muted-foreground">
+                Após o pagamento, aguarde a confirmação automática.
               </p>
-              <div className="pt-4 space-y-3">
-                <Button className="w-full" size="lg" onClick={() => window.location.href = "/"}>
+              {card.result.numeroSolicitacao > 0 && (
+                <p className="text-xs text-muted-foreground font-mono">
+                  Solicitação: {card.result.numeroSolicitacao}
+                </p>
+              )}
+              <div className="pt-2 space-y-3">
+                <Button variant="outline" className="w-full" onClick={() => window.location.href = "/"}>
                   Voltar ao Início
                 </Button>
                 <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleFullReset}>
@@ -508,8 +505,8 @@ export function DonationSection() {
     );
   }
 
-  // --- Card Declined / Error Screen ---
-  if (card.status === "declined" || card.status === "error") {
+  // --- Card Error Screen ---
+  if (card.status === "error") {
     return (
       <section className="py-12 md:py-20 bg-gradient-to-b from-background to-muted/20">
         <div className="container mx-auto px-4">
@@ -518,9 +515,9 @@ export function DonationSection() {
               <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
                 <AlertCircle className="w-10 h-10 text-destructive" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground">Pagamento não aprovado</h2>
+              <h2 className="text-2xl font-bold text-foreground">Erro ao gerar link de pagamento</h2>
               <p className="text-muted-foreground">
-                {card.error || card.result?.message || "Não foi possível processar o pagamento. Verifique os dados do cartão e tente novamente."}
+                {card.error || "Não foi possível gerar o link de pagamento. Tente novamente."}
               </p>
               <div className="pt-4 space-y-3">
                 <Button className="w-full" onClick={() => card.reset()}>Tentar Novamente</Button>
@@ -685,41 +682,13 @@ export function DonationSection() {
                   ))}
                 </RadioGroup>
 
-                {/* Credit card fields inline */}
+                {/* BB Pay info inline */}
                 {paymentMethod === "credit_card" && (
-                  <div className="mt-4 p-4 bg-muted/30 rounded-xl space-y-4 animate-in slide-in-from-top-2">
-                    <h4 className="font-medium text-foreground flex items-center gap-2"><CreditCard className="w-4 h-4" /> Dados do Cartão</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
-                        <Label htmlFor="cardName">Nome no Cartão</Label>
-                        <Input id="cardName" placeholder="NOME COMO ESTÁ NO CARTÃO" value={formData.cardName || ""} onChange={(e) => updateFormData({ cardName: e.target.value.toUpperCase() })} className="uppercase" />
-                      </div>
-                      <div className="md:col-span-2">
-                        <Label htmlFor="cardNumber">Número do Cartão</Label>
-                        <Input id="cardNumber" placeholder="0000 0000 0000 0000" value={formData.cardNumber || ""} onChange={(e) => updateFormData({ cardNumber: formatCardNumber(e.target.value) })} maxLength={19} />
-                      </div>
-                      <div>
-                        <Label htmlFor="cardCvv">CVV</Label>
-                        <Input id="cardCvv" placeholder="000" value={formData.cardCvv || ""} onChange={(e) => updateFormData({ cardCvv: e.target.value.replace(/\D/g, "").slice(0, 4) })} maxLength={4} />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label htmlFor="cardExpiryMonth">Mês</Label>
-                          <Select value={formData.cardExpiryMonth || ""} onValueChange={(v) => updateFormData({ cardExpiryMonth: v })}>
-                            <SelectTrigger><SelectValue placeholder="Mês" /></SelectTrigger>
-                            <SelectContent>{Array.from({ length: 12 }, (_, i) => (<SelectItem key={i + 1} value={String(i + 1).padStart(2, "0")}>{String(i + 1).padStart(2, "0")}</SelectItem>))}</SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="cardExpiryYear">Ano</Label>
-                          <Select value={formData.cardExpiryYear || ""} onValueChange={(v) => updateFormData({ cardExpiryYear: v })}>
-                            <SelectTrigger><SelectValue placeholder="Ano" /></SelectTrigger>
-                            <SelectContent>{Array.from({ length: 10 }, (_, i) => { const y = new Date().getFullYear() + i; return <SelectItem key={y} value={String(y)}>{y}</SelectItem>; })}</SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">🔒 Seus dados são criptografados e não armazenados localmente</p>
+                  <div className="mt-4 p-4 bg-muted/30 rounded-xl space-y-2 animate-in slide-in-from-top-2">
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 shrink-0" />
+                      No próximo passo, você receberá um link para pagar pelo App BB com cartão, PIX ou pontos Livelo.
+                    </p>
                   </div>
                 )}
               </div>
@@ -831,7 +800,7 @@ export function DonationSection() {
                         : boletoHook.status === "loading"
                           ? "Gerando Boleto..."
                           : card.status === "loading"
-                            ? "Processando pagamento..."
+                            ? "Gerando link de pagamento..."
                             : "Processando..."}
                     </>
                   ) : (
@@ -842,7 +811,7 @@ export function DonationSection() {
                         : paymentMethod === "boleto"
                           ? `Gerar Boleto de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
                           : paymentMethod === "credit_card"
-                            ? `Pagar ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} no Cartão`
+                            ? `Gerar Link BB Pay — ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
                             : `Enviar Doação de ${selectedAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}${isRecurring ? "/mês" : ""}`
                       }
                     </>
