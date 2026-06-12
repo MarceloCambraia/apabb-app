@@ -2,14 +2,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export type CardStatus = "idle" | "loading" | "approved" | "declined" | "error";
-
-export interface CardData {
-  numero: string;
-  validade: string; // MM/YY or MM/YYYY
-  cvv: string;
-  nome: string;
-}
+export type CardStatus = "idle" | "loading" | "pending_payment" | "error";
 
 export interface CardPagador {
   nome: string;
@@ -18,11 +11,9 @@ export interface CardPagador {
 }
 
 export interface CardResult {
-  status: "approved" | "declined";
-  authorizationCode: string | null;
-  message: string;
-  cardLastFour: string;
-  cardBrand: string;
+  urlSolicitacao: string;
+  numeroSolicitacao: number;
+  qrCode?: string;
   amount: number;
 }
 
@@ -33,7 +24,7 @@ export function useCardPayment() {
   const { toast } = useToast();
 
   const processPayment = useCallback(
-    async (params: { valor: number; cartao: CardData; pagador: CardPagador }) => {
+    async (params: { valor: number; pagador: CardPagador }) => {
       setStatus("loading");
       setError(null);
       setResult(null);
@@ -42,39 +33,29 @@ export function useCardPayment() {
         const { data, error: fnError } = await supabase.functions.invoke("processar-cartao-bb", {
           body: {
             valor: params.valor,
-            cartao: params.cartao,
             pagador: params.pagador,
           },
         });
 
         if (fnError) throw fnError;
 
-        if (data?.success && data?.status === "approved") {
+        if (data?.success && data?.urlSolicitacao) {
           setResult({
-            status: "approved",
-            authorizationCode: data.authorizationCode || null,
-            message: data.message || "Pagamento aprovado",
-            cardLastFour: data.cardLastFour,
-            cardBrand: data.cardBrand,
-            amount: data.amount,
+            urlSolicitacao: data.urlSolicitacao,
+            numeroSolicitacao: data.numeroSolicitacao,
+            qrCode: data.qrCode,
+            amount: params.valor,
           });
-          setStatus("approved");
+          setStatus("pending_payment");
         } else {
-          const msg = data?.message || data?.error || "Pagamento não aprovado";
-          setResult({
-            status: "declined",
-            authorizationCode: null,
-            message: msg,
-            cardLastFour: data?.cardLastFour || "",
-            cardBrand: data?.cardBrand || "",
-            amount: data?.amount || params.valor,
-          });
+          const msg = data?.message || data?.error || "Erro ao gerar link de pagamento";
           setError(msg);
-          setStatus("declined");
+          setStatus("error");
+          toast({ title: "Erro no pagamento", description: msg, variant: "destructive" });
         }
       } catch (err: any) {
-        console.error("Card payment error:", err);
-        const msg = err.message || "Erro ao processar pagamento";
+        console.error("BBPay error:", err);
+        const msg = err.message || "Erro ao criar solicitação de pagamento";
         setError(msg);
         setStatus("error");
         toast({ title: "Erro no pagamento", description: msg, variant: "destructive" });
