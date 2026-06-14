@@ -31,6 +31,9 @@ dist-ssr
 *.key
 *.p12
 *.crt
+*.jks
+*.keystore
 *CREDENTIALS*
 *credentials*
 ADMIN_CREDENTIALS.md
+android/keystore.properties
