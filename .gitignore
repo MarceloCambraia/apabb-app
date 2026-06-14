@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets and credentials — NEVER commit these
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.crt
+*CREDENTIALS*
+*credentials*
+ADMIN_CREDENTIALS.md
