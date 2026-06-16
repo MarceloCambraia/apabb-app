@@ -24,7 +24,7 @@ O **APABB App** é um aplicativo mobile (Android) e web que permite:
 | Backend | Supabase (PostgreSQL + Edge Functions Deno) |
 | Mobile | Capacitor (Android) |
 | Pagamentos | Banco do Brasil API (PIX v2, Cobranças v2, BB Pay v2) |
-| Proxy mTLS | Node.js + Express (Railway) |
+| Proxy mTLS | Node.js + Express (Google Cloud Run) |
 | E-mail | Resend |
 
 ---
@@ -94,9 +94,9 @@ apabb-app/
 
 | Método | Status | Observação |
 |--------|--------|-----------|
-| PIX (BB) | ✅ Produção | Via proxy mTLS Railway |
+| PIX (BB) | ✅ Produção | Via proxy mTLS Google Cloud Run |
 | Boleto (BB) | ⏳ Aguardando aprovação BB | API Cobranças v2 |
-| Cartão (BB Pay) | ⏳ Aguardando convênio | BB Pay v2 |
+| Cartão (BB Pay) | 🟡 Parcial | BB Pay v2 (PIX funcional via convênio 152306; EC3/cartão aguardando habilitação pelo BB) |
 
 ---
 
@@ -112,6 +112,23 @@ apabb-app/
 | `BB_NUMERO_CARTEIRA` | Número da carteira BB |
 | `BB_NUMERO_VARIACAO_CARTEIRA` | Variação da carteira BB |
 | `RESEND_API_KEY` | API Key do Resend para e-mails |
+| `BB_APP_KEY_BOLETO` | App Key específica para Boleto BB |
+| `BB_BASIC_AUTH_BOLETO` | Basic Auth (Base64) para Boleto BB |
+| `BB_NUMERO_CONVENIO_BBPAY` | Número do convênio BB Pay (cartão/checkout) |
+| `TEST_EMAIL_OVERRIDE` | E-mail para testes de lembrete de recorrência |
+
+---
+
+## 🔧 Proxy mTLS
+
+Chamadas à API do Banco do Brasil que exigem certificado mTLS (PIX e BB Pay/Checkout) não podem ser feitas diretamente pelas Edge Functions — o certificado precisa ser apresentado durante o handshake TLS. Por isso, existe um proxy intermediário:
+
+- **Repositório:** [bb-mtls-proxy](https://github.com/MarceloCambraia/bb-mtls-proxy)
+- **Runtime:** Node.js + Express
+- **Deploy:** Google Cloud Run (`bb-mtls-proxy-216085914365.us-central1.run.app`)
+- **Autenticação:** header `x-proxy-secret` (variável `PROXY_SECRET`)
+
+As Edge Functions enviam a requisição ao proxy, que anexa o certificado mTLS e repassa ao BB.
 
 ---
 
@@ -138,8 +155,3 @@ Davi dos Anjos Mendes de Souza
 Vinícius Vasconcelos Parreira
 
 ---
-
-Após substituir, commitar e fazer push:
-git add README.md
-git commit -m "docs: atualizar README com informações reais do projeto"
-git push

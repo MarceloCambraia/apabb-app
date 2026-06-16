@@ -14,27 +14,27 @@ async function getAccessToken(): Promise<string> {
     return tokenCache.accessToken;
   }
 
-  console.log("OAuth attempt without scope");
   const res = await fetch("https://oauth.bb.com.br/oauth/token", {
     method: "POST",
     headers: {
       Authorization: `Basic ${Deno.env.get("BB_BASIC_AUTH")}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({ grant_type: "client_credentials" }).toString(),
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      scope: "checkout.solicitacoes-requisicao",
+    }).toString(),
   });
 
   const rawText = await res.text();
-  console.log("OAuth response status:", res.status);
-  console.log("OAuth response body:", rawText);
 
   if (!res.ok) {
+    console.error("OAuth Error:", res.status, rawText);
     throw new Error(`OAuth Error (${res.status}): ${rawText}`);
   }
   let data: any;
   try { data = JSON.parse(rawText); } catch { throw new Error(`OAuth parse error: ${rawText}`); }
 
-  console.log("OAuth scopes granted:", data.scope ?? "(none returned)");
   tokenCache = {
     accessToken: data.access_token,
     expiresAt: now + data.expires_in * 1000,
@@ -128,37 +128,55 @@ serve(async (req) => {
     const accessToken = await getAccessToken();
 
     const bbBody = {
-      numeroConvenio,
-      pagamentoUnico: true,
-      valorSolicitacao: Number(Number(valor).toFixed(2)),
-      descricaoSolicitacaoPagamento: "Doação APABB",
-      codigoConciliacaoSolicitacao: txid,
-      urlRetorno: "https://apabb-together.lovable.app/doar",
+      geral: {
+        numeroConvenio,
+        pagamentoUnico: true,
+        valorSolicitacao: Number(Number(valor).toFixed(2)),
+        codigoConciliacaoSolicitacao: txid,
+        descricaoSolicitacaoPagamento: "Doação APABB",
+        urlRetorno: "https://apabb-together.lovable.app/doar",
+      },
       devedor: {
         tipoDocumentoPagador: 1,
         numeroDocumentoPagador: cpfClean,
-        nome: pagador.nome.substring(0, 60),
       },
       formasPagamento: [
         { codigoTipoPagamento: "PIX", quantidadeParcelas: 1 },
-        { codigoTipoPagamento: "EC3", quantidadeParcelas: 1 },
       ],
     };
 
-    const bbRes = await fetch(
-      `https://api.bb.com.br/bbpay/v2/solicitacoes?gw-app-key=${appKey}`,
-      {
+    const proxyUrl = "https://bb-mtls-proxy-216085914365.us-central1.run.app";
+    const checkoutUrl = `${proxyUrl}/v2/solicitacoes?gw-app-key=${appKey}`;
+    console.log("Checkout URL:", checkoutUrl);
+    console.log("Calling checkout API with body:", JSON.stringify(bbBody));
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    let bbRes: Response;
+    try {
+      bbRes = await fetch(checkoutUrl, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
           Accept: "application/json",
+          "x-proxy-secret": Deno.env.get("PROXY_SECRET") ?? "",
         },
         body: JSON.stringify(bbBody),
-      }
-    );
+        signal: controller.signal,
+      });
+    } catch (fetchError: any) {
+      console.error("Fetch error (possível timeout):", fetchError.message);
+      throw fetchError;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     const bbText = await bbRes.text();
+    console.log("Checkout response status:", bbRes.status);
+    console.log("Checkout response body:", bbText);
+
     let bbData: any = {};
     try { bbData = JSON.parse(bbText); } catch { bbData = { raw: bbText }; }
 
