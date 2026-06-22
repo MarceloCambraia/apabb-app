@@ -118,7 +118,7 @@ serve(async (req) => {
 
     const convenio = Deno.env.get("BB_NUMERO_CONVENIO")!;
     const carteira = Deno.env.get("BB_NUMERO_CARTEIRA") || "17";
-    const variacao = Deno.env.get("BB_NUMERO_VARIACAO_CARTEIRA") || "35";
+    const variacao = Deno.env.get("BB_NUMERO_VARIACAO_CARTEIRA") || "27";
     const appKey = Deno.env.get("BB_APP_KEY_BOLETO")!;
 
     if (!convenio || !appKey) {
