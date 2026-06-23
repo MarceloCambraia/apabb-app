@@ -4,19 +4,19 @@
 
 ---
 
-## 📱 Sobre o Projeto
+## Sobre o Projeto
 
 O **APABB App** é um aplicativo mobile (Android) e web que permite:
 
-- 💙 **Doações** via PIX, Boleto Bancário e Cartão de Crédito
-- 🔄 **Doações recorrentes** com sistema de badges (Apoiador, Protetor, Anjo)
-- 🤝 **Voluntariado** — cadastro, oportunidades e projetos
-- 👥 **Associação** — cadastro de associados
-- 📊 **Dashboard administrativo** — gestão de doações, voluntários e associados por núcleo
+- **Doações** via PIX, Boleto Bancário e Cartão de Crédito
+- **Doações recorrentes** com sistema de badges (Apoiador, Protetor, Anjo)
+- **Voluntariado** — cadastro, oportunidades e projetos
+- **Associação** — cadastro de associados
+- **Dashboard administrativo** — gestão de doações, voluntários e associados por núcleo
 
 ---
 
-## 🛠️ Stack
+## Stack
 
 | Camada | Tecnologia |
 |--------|-----------|
@@ -29,7 +29,7 @@ O **APABB App** é um aplicativo mobile (Android) e web que permite:
 
 ---
 
-## 🚀 Como rodar localmente
+## Como rodar localmente
 
 ### Pré-requisitos
 
@@ -54,7 +54,7 @@ Acesse em: `http://localhost:8080`
 
 ---
 
-## 📦 Build para Android
+## Build para Android
 
 ```bash
 # 1. Build do projeto web
@@ -73,7 +73,7 @@ No Android Studio: **Build → Build APK(s)**
 
 ---
 
-## 🗂️ Estrutura do Projeto
+## Estrutura do Projeto
 apabb-app/
 ├── src/
 │   ├── components/       # Componentes reutilizáveis
@@ -90,17 +90,17 @@ apabb-app/
 
 ---
 
-## 💳 Integrações de Pagamento
+## Integrações de Pagamento
 
 | Método | Status | Observação |
 |--------|--------|-----------|
-| PIX (BB) | ✅ Produção | Via proxy mTLS Google Cloud Run |
-| Boleto (BB) | ⏳ Aguardando aprovação BB | API Cobranças v2 |
-| Cartão (BB Pay) | 🟡 Parcial | BB Pay v2 (PIX funcional via convênio 152306; EC3/cartão aguardando habilitação pelo BB) |
+| PIX (BB) | Produção | Via proxy mTLS Google Cloud Run |
+| Boleto (BB) | API Cobranças v2 |
+| Cartão (BB Pay) | Parcial | BB Pay v2 |
 
 ---
 
-## 🔐 Variáveis de Ambiente (Supabase Secrets)
+## Variáveis de Ambiente (Supabase Secrets)
 
 | Secret | Descrição |
 |--------|-----------|
@@ -119,7 +119,7 @@ apabb-app/
 
 ---
 
-## 🔧 Proxy mTLS
+## Proxy mTLS
 
 Chamadas à API do Banco do Brasil que exigem certificado mTLS (PIX e BB Pay/Checkout) não podem ser feitas diretamente pelas Edge Functions — o certificado precisa ser apresentado durante o handshake TLS. Por isso, existe um proxy intermediário:
 
@@ -132,7 +132,7 @@ As Edge Functions enviam a requisição ao proxy, que anexa o certificado mTLS e
 
 ---
 
-## 👥 Roles de Usuário
+## Roles de Usuário
 
 | Role | Acesso |
 |------|--------|
@@ -151,7 +151,5 @@ Arthur Alves de Oliveira
 Jutahy Ferreira dos Santos
 
 Davi dos Anjos Mendes de Souza
-
-Vinícius Vasconcelos Parreira
 
 ---
