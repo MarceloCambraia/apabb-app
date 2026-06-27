@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-webhook-secret",
 };
 
 function getBadgeLevel(amount: number): string {
@@ -13,8 +13,19 @@ function getBadgeLevel(amount: number): string {
   return "apoiador";
 }
 
+// Constant-time string comparison to avoid timing attacks
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 serve(async (req) => {
-  // Always return 200 to prevent BB retry loops
+  // Always return 200 to prevent BB retry loops on processing errors,
+  // but return 401 for authentication failures so attackers get no signal of success.
   const ok = () =>
     new Response(JSON.stringify({ received: true }), {
       status: 200,
@@ -25,9 +36,34 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // --- Authentication: require shared secret ---
+  // Configure the BB webhook URL with ?secret=... (or send X-Webhook-Secret header).
+  const expectedSecret = Deno.env.get("BB_WEBHOOK_SECRET");
+  if (!expectedSecret) {
+    console.error("BB_WEBHOOK_SECRET not configured - rejecting all webhooks");
+    return new Response(JSON.stringify({ error: "Webhook not configured" }), {
+      status: 503,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const url = new URL(req.url);
+  const providedSecret =
+    url.searchParams.get("secret") ||
+    req.headers.get("x-webhook-secret") ||
+    "";
+
+  if (!providedSecret || !safeEqual(providedSecret, expectedSecret)) {
+    console.warn("BB Webhook unauthorized request from", req.headers.get("x-forwarded-for") || "unknown");
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const body = await req.json();
-    console.log("BB Webhook received:", JSON.stringify(body));
+    console.log("BB Webhook received (authenticated):", JSON.stringify(body));
 
     const pixArray = body?.pix;
     if (!Array.isArray(pixArray) || pixArray.length === 0) {
@@ -49,7 +85,8 @@ serve(async (req) => {
 
       console.log(`Processing txid: ${txid}, valor: ${pix.valor}`);
 
-      // 1. Update pix_charges status to paid — also read is_recurring
+      // Idempotency: only update charges that are still pending.
+      // Returning no row means the charge was already processed (or doesn't exist).
       const { data: charge, error: chargeErr } = await supabase
         .from("pix_charges")
         .update({
@@ -57,6 +94,7 @@ serve(async (req) => {
           webhook_received_at: new Date().toISOString(),
         })
         .eq("txid", txid)
+        .neq("status", "paid")
         .select("user_id, amount, nucleus, is_recurring")
         .maybeSingle();
 
@@ -66,7 +104,7 @@ serve(async (req) => {
       }
 
       if (!charge) {
-        console.warn(`No pix_charge found for txid: ${txid}`);
+        console.warn(`No pending pix_charge found for txid: ${txid} (already processed or unknown)`);
         continue;
       }
 
@@ -140,7 +178,7 @@ serve(async (req) => {
     return ok();
   } catch (e) {
     console.error("Webhook processing error:", e);
-    // Always return 200
+    // Always return 200 on processing errors to avoid BB retry storms
     return ok();
   }
 });

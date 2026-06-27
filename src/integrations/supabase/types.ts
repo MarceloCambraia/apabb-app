@@ -563,6 +563,8 @@ export type Database = {
       }
       volunteers: {
         Row: {
+          contact_medium: string | null
+          contacted_at: string | null
           created_at: string
           email: string
           id: string
@@ -578,6 +580,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contact_medium?: string | null
+          contacted_at?: string | null
           created_at?: string
           email: string
           id?: string
@@ -593,6 +597,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contact_medium?: string | null
+          contacted_at?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -611,7 +617,40 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      dashboard_summary: {
+        Row: {
+          inscricoes_pendentes: number | null
+          oportunidades_abertas: number | null
+          receita_total: number | null
+          total_associados: number | null
+          total_doacoes: number | null
+          total_voluntarios: number | null
+          voluntarios_pendentes: number | null
+        }
+        Relationships: []
+      }
+      project_registrations_detail: {
+        Row: {
+          id: string | null
+          project_description: string | null
+          project_id: string | null
+          project_nucleus: string | null
+          project_title: string | null
+          registration_date: string | null
+          status: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_registrations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       calculate_badge_level: { Args: { amount: number }; Returns: string }
