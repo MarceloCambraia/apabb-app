@@ -9,8 +9,19 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { DollarSign, Heart, CalendarDays, Shield, Star, Crown, Gem, Camera } from 'lucide-react';
+import { DollarSign, Heart, CalendarDays, Shield, Star, Crown, Gem, Camera, Trash2 } from 'lucide-react';
 import { Header } from '@/components/Header';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Donation {
   id: string;
@@ -76,7 +87,7 @@ function getProgressToNext(totalDonated: number): { percent: number; remaining: 
 }
 
 export default function Profile() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,6 +98,7 @@ export default function Profile() {
   const [activeSubscription, setActiveSubscription] = useState<ActiveSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/auth');
@@ -190,6 +202,32 @@ export default function Profile() {
   const { percent, remaining, nextTier } = getProgressToNext(effectiveAmount);
 
   const formatCurrency = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setDeletingAccount(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        'https://hyuwbysahezxobqcnbhc.supabase.co/functions/v1/deletar-conta',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || 'Erro ao excluir conta');
+      await signOut();
+      navigate('/auth');
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
 
   const displayName = profileName || user?.email?.split('@')[0] || 'Doador';
   const initials = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -364,6 +402,51 @@ export default function Profile() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Excluir conta */}
+        <div className="flex justify-center">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                disabled={deletingAccount}
+                className="flex items-center gap-2 text-sm text-destructive/70 hover:text-destructive transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir minha conta
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação é irreversível. Todos os seus dados serão excluídos permanentemente,
+                  incluindo histórico de doações, assinaturas e perfil.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {deletingAccount ? 'Excluindo...' : 'Excluir minha conta'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-center pb-2">
+          <a
+            href="https://marcelocambraia.github.io/apabb-privacy/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+          >
+            Política de Privacidade
+          </a>
+        </div>
 
       </div>
       <BottomNav />
