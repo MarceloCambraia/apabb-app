@@ -141,15 +141,3 @@ As Edge Functions enviam a requisição ao proxy, que anexa o certificado mTLS e
 | `coordenador_voluntarios` | Dashboard de voluntários do seu núcleo |
 
 ---
-
-**Grupo Desenvolvedor:**
-
-Marcelo Cambraia Villela
-
-Arthur Alves de Oliveira
-
-Jutahy Ferreira dos Santos
-
-Davi dos Anjos Mendes de Souza
-
----
